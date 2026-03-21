@@ -1,0 +1,4 @@
+flask
+pika
+psycopg2-binary
+cryptography

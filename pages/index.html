@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Adicionar Cliente</title>
+</head>
+<body>
+  <h1>Cadastrar Cliente e Certificado</h1>
+
+  <form action="http://localhost:8080/upload-cert" method="POST" enctype="multipart/form-data">
+    <label>Razao Social:</label><br>
+    <input type="text" name="razao_social" required><br><br>
+
+    <label>CNPJ/CPF:</label><br>
+    <input type="text" name="CNPJ_CPF" required><br><br>
+
+    <label>Nome do certificado:</label><br>
+    <input type="text" name="name" required><br><br>
+
+    <label>Certificado (.crt ou .pfx):</label><br>
+    <input type="file" name="cert_file" accept=".crt,.pem,.pfx" required><br><br>
+
+    <button type="submit">Salvar</button>
+  </form>
+</body>
+</html>

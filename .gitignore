@@ -1,0 +1,30 @@
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# API keys and secrets
+*.key
+*.pem
+secrets/
+
+# Credentials
+credentials.json
+config.json
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.swo
+
+# Dependencies
+node_modules/
+venv/
+__pycache__/
+
+# Logs and temporary files
+*.log
+tmp/
+temp/
