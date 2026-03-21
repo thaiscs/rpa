@@ -1,14 +1,21 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- Tabela de Clientes
+-- Cria enum para tipo de pessoa
+CREATE TYPE person_type_enum AS ENUM ('individual', 'company', 'mei', 'other');
+
+-- ============================
+-- Clients table
+-- ============================
 CREATE TABLE IF NOT EXISTS clients (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    razao_social TEXT NOT NULL,
-    cnpj_cpf TEXT NOT NULL UNIQUE,
+    legal_name TEXT NOT NULL,
+    tax_id TEXT NOT NULL UNIQUE,        -- CNPJ or CPF
+    person_type person_type_enum NOT NULL DEFAULT 'company',
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
-
--- Tabela de Certificados
+-- ============================
+-- Certificates table
+-- ============================
 CREATE TABLE IF NOT EXISTS certificates (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
@@ -18,10 +25,20 @@ CREATE TABLE IF NOT EXISTS certificates (
 
     name TEXT NOT NULL,
 
+    -- Full PFX file encrypted (raw uploaded file)
+    encrypted_pfx JSONB NOT NULL,
+    -- Password used to unlock the PFX
+    encrypted_pfx_password JSONB NOT NULL,
+    -- Extracted certificate (.cer or PEM)
     encrypted_cert JSONB NOT NULL,
-    encrypted_key  JSONB NOT NULL,
-    encrypted_cert_user TEXT,
-    encrypted_cert_password TEXT,
+    -- Extracted private key (.key or PEM)
+    encrypted_key JSONB NOT NULL,
+    -- Metadata extracted automatically
+    issuer TEXT,
+    valid_from TIMESTAMPTZ,
+    valid_to TIMESTAMPTZ,
 
+    expired BOOLEAN DEFAULT FALSE,
+    
     created_at TIMESTAMPTZ DEFAULT NOW()
 );

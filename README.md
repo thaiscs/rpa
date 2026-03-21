@@ -2,6 +2,7 @@
 
 - UI for uploading certificate
 - Deploy
+- Implementar certificate_health_check expired (Certificados para RPA e-CAC in chatgpt)
 - Armazenar a chave de criptografia em um KMS (AWS KMS, HashiCorp Vault, Azure Key Vault).
 
 ## Overview
@@ -45,6 +46,8 @@ sudo lsof -i :5432
 sudo systemctl stop postgresql
 docker compose start postgres
 openssl rand 32 > ./aes_key.key
+docker exec -i rpa-postgres-1 psql -U postgres -d certsdb -c "SELECT * FROM clients;"
+docker exec -i rpa-postgres-1 psql -U postgres -d certsdb -c "\x \nSELECT * FROM certificates LIMIT 1;"
 ```
 
 The above command builds and starts the `api` and `worker` services.

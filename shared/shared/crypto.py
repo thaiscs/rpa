@@ -1,6 +1,10 @@
 import os
 import logging
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.hazmat.primitives.serialization import pkcs12, Encoding, PrivateFormat, NoEncryption
+from cryptography.hazmat.primitives.serialization import BestAvailableEncryption
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
 from base64 import b64decode
 from pathlib import Path
 
@@ -89,3 +93,43 @@ def decrypt(nonce_hex: str, ciphertext_hex: str) -> bytes:
     decrypted = aesgcm.decrypt(nonce, ciphertext, associated_data=None)
     log.info("Decryption complete")
     return decrypted
+
+# -----------------------------
+# Extract cert/key from files
+# -----------------------------
+def extract_pfx_components(pfx_bytes: bytes, pfx_password: str):
+    """
+    Extracts:
+      - private key (PEM)
+      - certificate (PEM)
+    """
+    private_key, certificate, additional_certs = pkcs12.load_key_and_certificates(
+        data=pfx_bytes,
+        password=pfx_password.encode()
+    )
+
+    if private_key is None or certificate is None:
+        raise ValueError("Failed to extract key/cert from PFX. Invalid password?")
+
+    # Convert to PEM format
+    private_key_pem = private_key.private_bytes(
+        Encoding.PEM,
+        PrivateFormat.PKCS8,
+        NoEncryption()
+    )
+
+    certificate_pem = certificate.public_bytes(Encoding.PEM)
+
+    return private_key_pem, certificate_pem
+
+# -----------------------------
+# Extract cert metadata
+# -----------------------------
+def extract_cert_metadata(cert_pem: bytes):
+    cert = x509.load_pem_x509_certificate(cert_pem, default_backend())
+    metadata = {
+        "cert_issuer": cert.issuer.rfc4514_string(),
+        "cert_valid_from": cert.not_valid_before_utc,   # datetime com timezone,
+        "cert_valid_to": cert.not_valid_after_utc       # datetime com timezone
+    }
+    return metadata["cert_issuer"], metadata["cert_valid_from"], metadata["cert_valid_to"]

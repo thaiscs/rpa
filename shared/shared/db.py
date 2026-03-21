@@ -6,6 +6,8 @@ import time
 import logging
 from shared.crypto import encrypt
 from shared.crypto import decrypt
+from shared.crypto import extract_pfx_components
+from shared.crypto import extract_cert_metadata
 
 log = logging.getLogger(__name__)
 
@@ -41,23 +43,23 @@ def get_db_connection(retries: int = 10, delay: int = 2):
     raise last_exception
 
 
-def save_client_cert(razao_social: str, cnpj_cpf: str, cert_name: str, cert_bytes: bytes):
-    log.info(f"Saving certificate for CNPJ/CPF={cnpj_cpf}")
+def save_client_cert(legal_name: str, person_type: str, tax_id: str, cert_name: str, cert_bytes: bytes, cert_password: str):
+    log.info(f"Saving certificate for CNPJ/CPF={tax_id}, legal_name={legal_name}, cert_name={cert_name}")
 
     try:
-        encrypted_cert = encrypt(cert_bytes)
+        # Step 1. Upsert do cliente
+        print("DEBUG types THAIS:", type(tax_id), type(legal_name), type(person_type))
 
         conn = get_db_connection()
         cur = conn.cursor()
-
-        # 1. Upsert do cliente
         cur.execute("""
-            INSERT INTO clients (cnpj_cpf, razao_social)
-            VALUES (%s, %s)
-            ON CONFLICT (cnpj_cpf) DO UPDATE SET
-                razao_social = EXCLUDED.razao_social
+            INSERT INTO clients (tax_id, legal_name, person_type)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (tax_id) DO UPDATE SET
+                legal_name = EXCLUDED.legal_name,
+                person_type = EXCLUDED.person_type
             RETURNING id;
-        """, (cnpj_cpf, razao_social))
+        """, (tax_id, legal_name, person_type))
 
         row = cur.fetchone()
 
@@ -66,25 +68,44 @@ def save_client_cert(razao_social: str, cnpj_cpf: str, cert_name: str, cert_byte
 
         client_id = row["id"]
 
-        # 2. Upsert do certificado
+        # Step 2: extract cert + key
+        private_key_pem, certificate_pem = extract_pfx_components(
+            cert_bytes,
+            cert_password
+        )
+
+        # Step 3: encrypt everything
+        encrypted_pfx = encrypt(cert_bytes)
+        encrypted_password = encrypt(cert_password.encode())
+        encrypted_key = encrypt(private_key_pem)
+        encrypted_cert = encrypt(certificate_pem)
+
+        # Step 4. Upsert do certificado
+        cert_issuer, cert_valid_from, cert_valid_to = extract_cert_metadata(certificate_pem)
         cur.execute("""
             INSERT INTO certificates (
                 client_id,
                 name,
                 encrypted_cert,
                 encrypted_key,
-                encrypted_cert_user,
-                encrypted_cert_password
+                encrypted_pfx,
+                encrypted_pfx_password,
+                issuer,
+                valid_from,
+                valid_to
             )
-            VALUES (%s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id;
         """, (
             client_id,
             cert_name,
             Json(encrypted_cert),
             Json(encrypted_key),
-            encrypted_user,
-            encrypted_password
+            Json(encrypted_pfx),
+            Json(encrypted_password),
+            cert_issuer,
+            cert_valid_from,
+            cert_valid_to
         ))
 
         conn.commit()

@@ -4,7 +4,8 @@ from flask import Flask, request, jsonify
 import pika
 import json
 import logging
-from shared.db import save_client_cert  # método que fará encrypt + DB insert
+from shared.db import save_client_cert
+from shared.utils import get_person_type
 
 logging.basicConfig(
     level=logging.INFO,
@@ -25,16 +26,20 @@ def upload_cert():
         # -----------------------------
         log.info("Reading form fields...")
         
-        razao_social = request.form.get("razao_social")
-        cnpj_cpf = request.form.get("CNPJ_CPF")
+        legal_name = request.form.get("razao_social")
+        tax_id = request.form.get("CNPJ_CPF")
         cert_name = request.form.get("name")
         cert_file = request.files.get("cert_file")
-
-        if not razao_social or not cnpj_cpf or not cert_name or not cert_file:
+        cert_password = request.form.get("cert_password")
+        person_type = get_person_type(tax_id)
+        # DEBUG: veja exatamente o que está indo pro DB
+        print("DEBUG: values going to DB ->", tax_id, legal_name, person_type)
+        print("DEBUG types:", type(tax_id), type(legal_name), type(person_type))
+        if not legal_name or not tax_id or not cert_name or not cert_file or not cert_password:
             log.warning("Missing required fields.")
             return jsonify({"error": "Todos os campos são obrigatórios."}), 400
 
-        log.info(f"Cliente: {razao_social} | CNPJ/CPF: {cnpj_cpf} | Certificado: {cert_name}")
+        log.info(f"Cliente: {legal_name} | CNPJ/CPF: {tax_id} | Certificado: {cert_name}")
 
         # -----------------------------
         # Step 2: Read certificate bytes
@@ -46,16 +51,18 @@ def upload_cert():
         # Step 3: Delegate encrypt + DB save
         # -----------------------------
         save_client_cert(
-            razao_social=razao_social,
-            cnpj_cpf=cnpj_cpf,
+            legal_name=legal_name,
+            tax_id=tax_id,
             cert_name=cert_name,
-            cert_bytes=file_bytes
+            cert_bytes=file_bytes,
+            cert_password=cert_password,
+            person_type=str(person_type)
         )
 
         return jsonify({
             "message": "Cliente e certificado armazenados com sucesso.",
-            "razao_social": razao_social,
-            "cnpj_cpf": cnpj_cpf,
+            "razao_social": legal_name,
+            "cnpj_cpf": tax_id,
             "cert_name": cert_name
         }), 201
 
