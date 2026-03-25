@@ -1,7 +1,11 @@
 ## ToDo
 
 - UI for uploading certificate
+- Error handling
 - Deploy
+
+## Escalar
+
 - Implementar certificate_health_check expired (Certificados para RPA e-CAC in chatgpt)
 - Armazenar a chave de criptografia em um KMS (AWS KMS, HashiCorp Vault, Azure Key Vault).
 
@@ -36,6 +40,7 @@ docker compose ps -a
 docker compose images
 docker compose logs -f api
 docker compose exec api sh
+docker run --rm 4bd09f188804 pip list
 OR
 docker compose start
 OR

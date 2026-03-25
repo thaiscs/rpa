@@ -5,14 +5,6 @@ secrets:
     file: ./aes_key.key
 
 services:
-  web:
-    build: ./pages
-    image: nginx:alpine
-    ports:
-      - "5000:80"
-    volumes:
-      - ./pages:/usr/share/nginx/html
-
   postgres:
     image: postgres:16
     environment:
@@ -66,8 +58,21 @@ services:
     secrets:
       - aes_key
     depends_on:
-      - rabbitmq
       - postgres
+      - rabbitmq
+
+  ui-components:
+    build: ./pages
+    ports:
+      - "3000:3000"
+    # remove on Production, copy files to image instead
+    volumes:
+      - ./pages:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python main.py --reload
+    depends_on:
+      - api
 
   worker:
     build: 

@@ -28,13 +28,11 @@ def upload_cert():
         
         legal_name = request.form.get("razao_social")
         tax_id = request.form.get("CNPJ_CPF")
-        cert_name = request.form.get("name")
+        cert_name = request.form.get("cert_name")
         cert_file = request.files.get("cert_file")
         cert_password = request.form.get("cert_password")
         person_type = get_person_type(tax_id)
-        # DEBUG: veja exatamente o que está indo pro DB
-        print("DEBUG: values going to DB ->", tax_id, legal_name, person_type)
-        print("DEBUG types:", type(tax_id), type(legal_name), type(person_type))
+
         if not legal_name or not tax_id or not cert_name or not cert_file or not cert_password:
             log.warning("Missing required fields.")
             return jsonify({"error": "Todos os campos são obrigatórios."}), 400

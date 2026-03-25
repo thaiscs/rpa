@@ -32,11 +32,11 @@ def load_aes_key() -> bytes:
     key_env = os.getenv("AES_SECRET_KEY")
     key: bytes | None = None
 
-    # 1️⃣ Try Docker secret first
+    # Try Docker secret first
     if key_file.exists():
         log.info("Loading AES key from Docker secret")
         key = key_file.read_bytes()
-    # 2️⃣ Fall back to environment variable
+    # Fall back to environment variable
     elif key_env:
         log.info("Loading AES key from environment variable")
         key_env = key_env.strip()
@@ -50,7 +50,7 @@ def load_aes_key() -> bytes:
     else:
         raise RuntimeError("AES key not found in Docker secret or environment variable")
 
-    # ✅ Validate length
+    # Validate length
     if len(key) not in (16, 24, 32):
         raise RuntimeError(f"AESGCM key must be 128, 192, or 256 bits. Got {len(key)*8} bits")
 
@@ -103,14 +103,21 @@ def extract_pfx_components(pfx_bytes: bytes, pfx_password: str):
       - private key (PEM)
       - certificate (PEM)
     """
-    private_key, certificate, additional_certs = pkcs12.load_key_and_certificates(
-        data=pfx_bytes,
-        password=pfx_password.encode()
-    )
+    try:
 
+        private_key, certificate, additional_certs = pkcs12.load_key_and_certificates(
+            data=pfx_bytes,
+            password=pfx_password.encode()
+        )
+
+    except ValueError:
+        # This catches "Invalid password or PKCS12 data" and similar issues
+        raise
+
+    # Double-check the extracted components
     if private_key is None or certificate is None:
-        raise ValueError("Failed to extract key/cert from PFX. Invalid password?")
-
+        raise ValueError("Não foi possível extrair a chave ou certificado do arquivo PFX.")
+    
     # Convert to PEM format
     private_key_pem = private_key.private_bytes(
         Encoding.PEM,
