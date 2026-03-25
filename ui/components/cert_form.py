@@ -85,24 +85,36 @@ async def submit_form(legal_name, tax_id, cert_name, cert_password, cert_file):
             ui.label("Erro ao enviar: " + parse_err(message)).classes("text-negative text-h6")
             dialog.open()
 
-with ui.element('q-card').classes('q-pa-lg shadow-3 rounded-borders bg-white'):
-    ui.label("Cadastrar Cliente e Certificado").classes("text-h5 q-mb-md")
+def cert_form():
+    with ui.element('q-card').classes('q-pa-lg shadow-3 rounded-borders bg-white'):
+        ui.label("Cadastrar Cliente e Certificado").classes("text-h5 q-mb-md")
+        # Add a focus effect for underline + gold text
+        ui.add_css("""
+        .q-field--filled q-field__control::after {
+            color: #CEB690 !important;          /* gold text */
+            border-bottom: 2px solid #CEB690 !important;  /* gold underline */
+            font-size: 60px !important;
+        }
+        .q-field__control {
+            color: #091E2F !important;  /* gold text for filled fields */
+        }
+        """, shared=True)
+        legal_name = ui.input("Razão Social*") \
+            .props("filled flat") \
+            .classes(
+                "mb-2 text-gray-100 placeholder-gray-300 bg-white hover:bg-[#0B2A43] focus:bg-[#0B2A43] focus:text-white focus:placeholder-gray-400 transition-all"
+            )
+        tax_id = ui.input("CNPJ/CPF").props("filled").classes("mb-2")
+        cert_name = ui.input("Nome do certificado").props("filled").classes("mb-2")
+        cert_password = ui.input("Senha do certificado").props("filled").classes("mb-2")
 
-    legal_name = ui.input("Razão Social*").props("filled").classes("mb-2")
-    tax_id = ui.input("CNPJ/CPF").props("filled").classes("mb-2")
-    cert_name = ui.input("Nome do certificado").props("filled").classes("mb-2")
-    cert_password = ui.input("Senha do certificado").props("filled").classes("mb-2")
+        cert_file = ui.upload(
+            label="Certificado .pfx",
+            on_upload=handle_upload,
+            multiple=False
+        ).props('accept=".pfx" auto-upload').classes("mb-4")
 
-    cert_file = ui.upload(
-        label="Certificado .pfx",
-        on_upload=handle_upload,
-        multiple=False
-    ).props('accept=".pfx" auto-upload').classes("mb-4")
-
-    ui.button(
-        "Enviar",
-        color="primary",
-        on_click=lambda: submit_form(legal_name, tax_id, cert_name, cert_password, cert_file)
-    )
-
-ui.run(host="0.0.0.0", port=3000)
+        ui.button(
+            "Enviar",
+            on_click=lambda: submit_form(legal_name, tax_id, cert_name, cert_password, cert_file)
+        ).props("flat").classes("bg-[#CEB690] text-white hover:bg-[#93713C] transition-all")

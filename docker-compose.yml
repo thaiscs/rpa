@@ -61,13 +61,13 @@ services:
       - postgres
       - rabbitmq
 
-  ui-components:
-    build: ./pages
+  ui:
+    build: ./ui
     ports:
       - "3000:3000"
     # remove on Production, copy files to image instead
     volumes:
-      - ./pages:/app
+      - ./ui:/app
     environment:
       - PYTHONUNBUFFERED=1
     command: python main.py --reload
