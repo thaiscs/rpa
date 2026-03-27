@@ -2,14 +2,14 @@ from nicegui import ui
 
 def sidebar():
     with ui.column().classes(
-        'w-84 h-screen bg-[#091E2F] p-4 gap-4 shadow-xl text-gray-300'
+        'w-84 h-screen bg-[#091E2F] p-6 gap-4 shadow-xl text-gray-300'
     ):
 
         # --- Header with robot icon ---
         ui.add_head_html('<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">')
         with ui.row().classes('items-center gap-2 mb-2'):
             ui.html('<i class="bi bi-robot text-6xl text-[#CEB690]"></i>')
-            ui.label('Admin Panel').classes('text-2xl font-bold text-white')
+            ui.label('Admin Panel').classes('text-2xl font-bold text-white p-4')
 
         ui.separator().classes('opacity-30')
 

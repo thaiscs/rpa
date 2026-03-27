@@ -34,7 +34,6 @@ def save_client_cert(legal_name: str, person_type: str, tax_id: str, cert_name: 
                 cert_bytes,
                 cert_password
             )
-            print("DEBUG: extracted cert/key ->", private_key_pem, certificate_pem)
             # Step 3: encrypt everything
             encrypted_pfx = encrypt(cert_bytes)
             encrypted_password = encrypt(cert_password.encode())

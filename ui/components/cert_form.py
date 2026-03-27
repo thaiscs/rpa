@@ -33,9 +33,9 @@ def parse_err(message: str):
 
 async def submit_form(legal_name, tax_id, cert_name, cert_password, cert_file):
     # Validation
-    # TODO: hide senha, validate file type
-  
+    # TODO: extract form modules
     print("DEBUG: form values ->", legal_name.value, tax_id.value, cert_name.value, cert_password.value)
+
     if not legal_name.value or not tax_id.value or not cert_name.value or not cert_password.value:
         show_err("Todos os campos são obrigatórios")
         return
@@ -66,29 +66,27 @@ async def submit_form(legal_name, tax_id, cert_name, cert_password, cert_file):
 
     async with httpx.AsyncClient() as client:
         response = await client.post(API_URL, data=form_data, files=file)
-
-    if response.status_code == 200:
-      dlg = ui.dialog().props(
-          'persistent',             # prevents clicking outside to close
-          'max-width=500px',
-          'position=top'
-      ).classes('q-pa-md')
-
-      dlg.add(ui.label(response.json().get("message", "Sucesso!")).classes("text-positive text-h6"))
-      dlg.open()
-      uploaded_file = None  # reset
+    print("RESP: ==>", response.json())
+    if response.status_code == 201:
+        with ui.dialog() as dialog:
+          with ui.card().style("align-items: center; padding: 24px;"):
+            ui.button().props("icon=close color=gray flat round").style("align-self: flex-end;").on("click", lambda: dialog.close())
+            ui.label(response.json().get("message", "Sucesso!")).classes("text-h6 q-pb-lg")
+            ui.html(f'<i class="bi bi-check-circle-fill text-6xl text-positive"></i>')
+            dialog.open()
+          uploaded_file = None  # reset
     else:
         message = response.json().get("error", "Erro desconhecido")
         with ui.dialog() as dialog:
-          with ui.card().classes("bg-red-3 q-pa-md"):  # red background + padding
-            ui.button().classes("float-right").props("icon=close color=white flat round").on("click", lambda: dialog.close())
-            ui.label("Erro ao enviar: " + parse_err(message)).classes("text-negative text-h6")
+          with ui.card().classes("q-pa-md").style("align-items: flex-end;"):
+            ui.button().props("icon=close color=gray flat round").on("click", lambda: dialog.close())
+            ui.label("ERRO: " + parse_err(message)).classes("text-negative text-h6 q-pb-lg")
             dialog.open()
 
 def cert_form():
-    with ui.element('q-card').classes('q-pa-lg shadow-3 rounded-borders bg-white'):
-        ui.label("Cadastrar Cliente e Certificado").classes("text-h5 q-mb-md")
-        # Add a focus effect for underline + gold text
+    with ui.element("q-card").classes("q-pa-xl shadow-3 rounded-borders bg-white w-full display-flex flex-column items-center"):
+        ui.label("Cadastrar Cliente e Certificado").classes("q-pa-lg text-h4 q-mb-md")
+        # TODO: COLOR THEMING https://nicegui.io/documentation/section_styling_appearance
         ui.add_css("""
         .q-field--filled q-field__control::after {
             color: #CEB690 !important;          /* gold text */
@@ -98,23 +96,35 @@ def cert_form():
         .q-field__control {
             color: #091E2F !important;  /* gold text for filled fields */
         }
+        .q-uploader__header {
+            background-color: #CEB690 !important;  /* dark blue header */
+        }
+        .q-field {
+            font-size: 20px !important;
+        }
         """, shared=True)
-        legal_name = ui.input("Razão Social*") \
+        legal_name = ui.input("Razão Social *") \
             .props("filled flat") \
             .classes(
-                "mb-2 text-gray-100 placeholder-gray-300 bg-white hover:bg-[#0B2A43] focus:bg-[#0B2A43] focus:text-white focus:placeholder-gray-400 transition-all"
+                "m-4 w-[80%] text-gray-100 placeholder-gray-300 bg-white hover:bg-[#0B2A43] focus:bg-[#0B2A43] focus:text-white focus:placeholder-gray-400 transition-all rounded"
             )
-        tax_id = ui.input("CNPJ/CPF").props("filled").classes("mb-2")
-        cert_name = ui.input("Nome do certificado").props("filled").classes("mb-2")
-        cert_password = ui.input("Senha do certificado").props("filled").classes("mb-2")
-
+        tax_id = ui.input("CNPJ/CPF *").props("filled").classes("m-4 w-[80%] rounde")
+        cert_name = ui.input("Nome do certificado *").props("filled").classes("m-4 w-[80%] rounde")
+        cert_password = (
+            ui.input("Senha do certificado *", password_toggle_button=True)
+            .props("type=password filled")
+            .classes("m-4 w-[80%] rounded")
+        )
         cert_file = ui.upload(
-            label="Certificado .pfx",
+            label="Arquivo do certificado .pfx",
             on_upload=handle_upload,
             multiple=False
-        ).props('accept=".pfx" auto-upload').classes("mb-4")
+        ).props('accept=".pfx" auto-upload').classes("m-4 text-center text-h6")
 
+        with cert_file.add_slot('list'):
+            ui.icon('cloud_upload').classes("text-6xl text-[#CEB690]")
+        
         ui.button(
             "Enviar",
             on_click=lambda: submit_form(legal_name, tax_id, cert_name, cert_password, cert_file)
-        ).props("flat").classes("bg-[#CEB690] text-white hover:bg-[#93713C] transition-all")
+        ).props("flat").classes("bg-[#091E2F] text-white hover:bg-[#93713C] transition-all float-right q-pa-md rounded text-subtitle-1")
