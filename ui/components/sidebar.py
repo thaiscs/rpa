@@ -11,7 +11,7 @@ def sidebar():
             ui.html('<i class="bi bi-robot text-6xl text-[#CEB690]"></i>')
             ui.label('Admin Panel').classes('text-2xl font-bold text-white p-4')
 
-        ui.separator().classes('opacity-30')
+        ui.separator().style("border-bottom-color: white;border-bottom-width: 1px;border-bottom-style: outset;")
 
         # --- Reusable nav link component ---
         def nav_link(icon_name, text, url):

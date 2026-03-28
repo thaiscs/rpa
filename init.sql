@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS clients (
     legal_name TEXT NOT NULL,
     tax_id TEXT NOT NULL UNIQUE,        -- CNPJ or CPF
     person_type person_type_enum NOT NULL DEFAULT 'company',
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at timestamptz NOT NULL DEFAULT now()
 );
 -- ============================
 -- Certificates table
@@ -40,5 +41,39 @@ CREATE TABLE IF NOT EXISTS certificates (
 
     expired BOOLEAN DEFAULT FALSE,
     
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+-- ============================
+-- Trigger function
+-- ============================
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = now();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Automatically attach trigger to every table with updated_at
+DO $$
+DECLARE
+    t RECORD;
+BEGIN
+    FOR t IN
+        SELECT table_schema, table_name
+        FROM information_schema.columns
+        WHERE column_name = 'updated_at'
+          AND table_schema = 'public'
+    LOOP
+        EXECUTE format(
+            'CREATE TRIGGER set_updated_at_%I
+             BEFORE UPDATE ON %I.%I
+             FOR EACH ROW
+             EXECUTE FUNCTION update_updated_at_column();',
+            t.table_name, t.table_schema, t.table_name
+        );
+    END LOOP;
+END;
+$$;

@@ -15,8 +15,7 @@ services:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     command: >
       postgres
-      -c log_statement=mod
-      -c log_parameter_max_length=128
+      -c log_statement=none
     ports:
       - "5432:5432"
     healthcheck:
