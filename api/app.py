@@ -1,9 +1,9 @@
-from multiprocessing.dummy.connection import Client
-import os
-from flask import Flask, request, jsonify
 import pika
 import json
 import logging
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi.responses import JSONResponse, PlainTextResponse
+from pydantic import BaseModel
 from shared.db import save_client_cert
 from shared.utils import get_person_type
 
@@ -14,40 +14,39 @@ logging.basicConfig(
 
 log = logging.getLogger(__name__)
 
-app = Flask(__name__)
+app = FastAPI(title="RPA Backend", version="1.0.0")
+
+# -----------------------------
+# Models
+# -----------------------------
+
+class JobPayload(BaseModel):
+    job_type: str
+    data: dict
+
+
+# -----------------------------
+# Routes
+# -----------------------------
 
 @app.post("/upload-cert")
-def upload_cert():
+async def upload_cert(
+    legal_name: str = Form(..., alias="razao_social"),
+    tax_id: str = Form(..., alias="CNPJ_CPF"),
+    cert_name: str = Form(...),
+    cert_password: str = Form(...),
+    cert_file: UploadFile = File(...)
+):
     log.info("==== /upload-cert called ====")
 
     try:
-        # -----------------------------
-        # Step 1: Read form fields
-        # -----------------------------
-        log.info("Reading form fields...")
-        
-        legal_name = request.form.get("razao_social")
-        tax_id = request.form.get("CNPJ_CPF")
-        cert_name = request.form.get("cert_name")
-        cert_file = request.files.get("cert_file")
-        cert_password = request.form.get("cert_password")
         person_type = get_person_type(tax_id)
-
-        if not legal_name or not tax_id or not cert_name or not cert_file or not cert_password:
-            log.warning("Missing required fields.")
-            return jsonify({"error": "Todos os campos são obrigatórios."}), 400
-
         log.info(f"Cliente: {legal_name} | CNPJ/CPF: {tax_id} | Certificado: {cert_name}")
 
-        # -----------------------------
-        # Step 2: Read certificate bytes
-        # -----------------------------
-        log.info("Reading certificate file bytes...")
-        file_bytes = cert_file.read()
+        # read uploaded file
+        file_bytes = await cert_file.read()
 
-        # -----------------------------
-        # Step 3: Delegate encrypt + DB save
-        # -----------------------------
+        # Step 3: Save + encrypt via shared module
         save_client_cert(
             legal_name=legal_name,
             tax_id=tax_id,
@@ -56,22 +55,19 @@ def upload_cert():
             cert_password=cert_password,
             person_type=str(person_type)
         )
-
-        return jsonify({
+        return {
             "message": "Cliente e certificado armazenados com sucesso.",
             "razao_social": legal_name,
             "cnpj_cpf": tax_id,
             "cert_name": cert_name
-        }), 201
+        }
 
     except Exception as e:
         log.exception("Error in /upload-cert")
-        return jsonify({"error": str(e)}), 500
+        raise HTTPException(status_code=500, detail=str(e))
 
-def publish_job(payload):
-    connection = pika.BlockingConnection(
-        pika.ConnectionParameters("rabbitmq")
-    )
+def publish_job(payload: dict):
+    connection = pika.BlockingConnection(pika.ConnectionParameters("rabbitmq"))
     channel = connection.channel()
     channel.queue_declare(queue="jobs")
 
@@ -84,17 +80,11 @@ def publish_job(payload):
     connection.close()
 
 @app.post("/send-job")
-def send_job():
-    payload = request.json
-    # publish_job(payload)
-    return jsonify({"status": "queued", "job": payload})
+async def send_job(payload: JobPayload):
+    # publish_job(payload.dict())
+    return {"status": "queued", "job": payload}
 
-# --------------------------------------------------
-# Dashboard for monitoring jobs
-# --------------------------------------------------
-@app.get("/")
-def home():
+
+@app.get("/", response_class=PlainTextResponse)
+async def home():
     return "Dashboard ativo — envie jobs via POST /send-job"
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
