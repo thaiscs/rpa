@@ -1,17 +1,15 @@
 ## Deployment - checklist:
 
 - aes_key.key file load in docker secrets
-- Flask appneed a proper WSGI server and some additional hardening: Use HTTPS (via Nginx + Let’s Encrypt)?
-- Turn Off Debug Mode
 - Https encryption/certificate: https://nicegui.io/documentation/section_configuration_deployment#server_hosting
 - Sanitize user inputs
-- Set secure cookies
-- refactor compose
-- refactor dockerfiles
+- Set secure cookies on auth
+- refactor compose, remove volumes
+- refactor dockerfiles with non-root user for security
 
 ## Escalar
 
-- Implementar SQLAlchemy and turn on postgres logging
+- Implementar SQLAlchemy for parameterized queries and turn on postgres logging
 - Implementar certificate_health_check expired (Certificados para RPA e-CAC in chatgpt)
 - Armazenar a chave de criptografia em um KMS (AWS KMS, HashiCorp Vault, Azure Key Vault).
 

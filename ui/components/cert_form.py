@@ -21,20 +21,30 @@ def show_err(message: str, duration: int = 3000):
         transition_hide="slide-up"
     )
 
-def parse_err(message: str):
-    if "invalid" in message.lower():
-        return "Arquivo ou senha do certificado inválidos."
-    elif "missing" in message.lower():
-        return "Todos os campos são obrigatórios."
-    elif "cnpj/cpf" in message.lower():
-        return "CNPJ/CPF inválido. Deve conter 11 ou 14 dígitos."
+def parse_err(message: str | dict) -> str:
+    # If message is a dict, try to extract a meaningful string
+    if isinstance(message, dict):
+        # Common key 'detail', fallback to first value or empty string
+        message_text = message.get("detail") or next(iter(message.values()), "")
     else:
-        return message  # fallback to original message
+        message_text = message
+
+    # Normalize to lowercase for keyword checks
+    lower_msg = message_text.lower()
+
+    if "invalid" in lower_msg:
+        return "Arquivo ou senha do certificado inválidos."
+    elif "missing" in lower_msg:
+        return "Todos os campos são obrigatórios."
+    elif "cnpj/cpf" in lower_msg:
+        return "CNPJ/CPF inválido. Deve conter 11 ou 14 dígitos."
+    
+    return message_text  # fallback
 
 async def submit_form(legal_name, tax_id, cert_name, cert_password, cert_file):
     # Validation
     # TODO: extract form modules
-    print("DEBUG: form values ->", legal_name.value, tax_id.value, cert_name.value, cert_password.value)
+    print("DEBUG: form values ->", legal_name.value)
 
     if not legal_name.value or not tax_id.value or not cert_name.value or not cert_password.value:
         show_err("Todos os campos são obrigatórios")
@@ -66,8 +76,8 @@ async def submit_form(legal_name, tax_id, cert_name, cert_password, cert_file):
 
     async with httpx.AsyncClient() as client:
         response = await client.post(API_URL, data=form_data, files=file)
-    print("RESP: ==>", response.json())
-    if response.status_code == 201:
+    print("RESP: ==>", response.json(), response.status_code)
+    if response.status_code == 200:
         with ui.dialog() as dialog:
           with ui.card().style("align-items: center; padding: 24px;"):
             ui.button().props("icon=close color=gray flat round").style("align-self: flex-end;").on("click", lambda: dialog.close())
@@ -76,7 +86,7 @@ async def submit_form(legal_name, tax_id, cert_name, cert_password, cert_file):
             dialog.open()
           uploaded_file = None  # reset
     else:
-        message = response.json().get("error", "Erro desconhecido")
+        message = response.json().get("detail", "Erro desconhecido")
         with ui.dialog() as dialog:
           with ui.card().classes("q-pa-md").style("align-items: flex-end;"):
             ui.button().props("icon=close color=gray flat round").on("click", lambda: dialog.close())

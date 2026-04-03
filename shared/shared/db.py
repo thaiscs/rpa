@@ -9,7 +9,7 @@ import logging
 log = logging.getLogger(__name__)
 
 def save_client_cert(legal_name: str, person_type: str, tax_id: str, cert_name: str, cert_bytes: bytes, cert_password: str):
-    log.info(f"Saving certificate for CNPJ/CPF={tax_id}, legal_name={legal_name}, cert_name={cert_name}")
+    log.info(f"Saving certificate...")
 
     try:
         # Step 1. Upsert do cliente

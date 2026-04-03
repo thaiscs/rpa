@@ -1,4 +1,6 @@
-flask
+fastapi
+uvicorn
+python-multipart
 pika
 psycopg2-binary
 cryptography

@@ -1,6 +1,6 @@
-import pika
 import json
 import logging
+import pika
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.responses import JSONResponse, PlainTextResponse
 from pydantic import BaseModel
@@ -41,12 +41,11 @@ async def upload_cert(
 
     try:
         person_type = get_person_type(tax_id)
-        log.info(f"Cliente: {legal_name} | CNPJ/CPF: {tax_id} | Certificado: {cert_name}")
 
-        # read uploaded file
+        # Read uploaded file
         file_bytes = await cert_file.read()
 
-        # Step 3: Save + encrypt via shared module
+        # Save + encrypt via shared module
         save_client_cert(
             legal_name=legal_name,
             tax_id=tax_id,
@@ -55,6 +54,7 @@ async def upload_cert(
             cert_password=cert_password,
             person_type=str(person_type)
         )
+
         return {
             "message": "Cliente e certificado armazenados com sucesso.",
             "razao_social": legal_name,
@@ -66,7 +66,9 @@ async def upload_cert(
         log.exception("Error in /upload-cert")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 def publish_job(payload: dict):
+    # connecting to shared/worker thru aio-pika async??
     connection = pika.BlockingConnection(pika.ConnectionParameters("rabbitmq"))
     channel = connection.channel()
     channel.queue_declare(queue="jobs")
@@ -78,6 +80,7 @@ def publish_job(payload: dict):
     )
 
     connection.close()
+
 
 @app.post("/send-job")
 async def send_job(payload: JobPayload):
