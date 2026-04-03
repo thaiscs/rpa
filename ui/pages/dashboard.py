@@ -1,7 +1,7 @@
 from nicegui import ui
 from components.sidebar import sidebar
 
-@ui.page("/")
+@ui.page("/dashboard")
 def dashboard():
     with ui.row().classes("w-full"):
         sidebar()

@@ -11,7 +11,7 @@ def handle_upload(e: events.UploadEventArguments):
     uploaded_file = e.file
     ui.notify(f"Arquivo '{uploaded_file.name}' carregado com sucesso!", color="positive")
 
-def show_err(message: str, duration: int = 3000):
+def toast_err(message: str, duration: int = 3000):
     ui.notify(
         message,
         color="negative",
@@ -47,16 +47,16 @@ async def submit_form(legal_name, tax_id, cert_name, cert_password, cert_file):
     print("DEBUG: form values ->", legal_name.value)
 
     if not legal_name.value or not tax_id.value or not cert_name.value or not cert_password.value:
-        show_err("Todos os campos são obrigatórios")
+        toast_err("Todos os campos são obrigatórios")
         return
     
     global uploaded_file
     if not uploaded_file:
-        show_err("Envie um arquivo .pfx")
+        toast_err("Envie um arquivo .pfx")
         return
 
     if not validate_tax_id(tax_id.value):
-        show_err("CNPJ/CPF inválido. Deve conter 11 ou 14 dígitos.")
+        toast_err("CNPJ/CPF inválido. Deve conter 11 ou 14 dígitos.")
         return
 
     form_data = {
@@ -78,6 +78,7 @@ async def submit_form(legal_name, tax_id, cert_name, cert_password, cert_file):
         response = await client.post(API_URL, data=form_data, files=file)
     print("RESP: ==>", response.json(), response.status_code)
     if response.status_code == 200:
+        # extract to success dialog component/helper
         with ui.dialog() as dialog:
           with ui.card().style("align-items: center; padding: 24px;"):
             ui.button().props("icon=close color=gray flat round").style("align-self: flex-end;").on("click", lambda: dialog.close())
@@ -87,6 +88,7 @@ async def submit_form(legal_name, tax_id, cert_name, cert_password, cert_file):
           uploaded_file = None  # reset
     else:
         message = response.json().get("detail", "Erro desconhecido")
+        # extract to failure dialog component/helper
         with ui.dialog() as dialog:
           with ui.card().classes("q-pa-md").style("align-items: flex-end;"):
             ui.button().props("icon=close color=gray flat round").on("click", lambda: dialog.close())
@@ -118,8 +120,8 @@ def cert_form():
             .classes(
                 "m-4 w-[80%] text-gray-100 placeholder-gray-300 bg-white hover:bg-[#0B2A43] focus:bg-[#0B2A43] focus:text-white focus:placeholder-gray-400 transition-all rounded"
             )
-        tax_id = ui.input("CNPJ/CPF *").props("filled").classes("m-4 w-[80%] rounde")
-        cert_name = ui.input("Nome do certificado *").props("filled").classes("m-4 w-[80%] rounde")
+        tax_id = ui.input("CNPJ/CPF *").props("filled").classes("m-4 w-[80%] rounded")
+        cert_name = ui.input("Nome do certificado *").props("filled").classes("m-4 w-[80%] rounded")
         cert_password = (
             ui.input("Senha do certificado *", password_toggle_button=True)
             .props("type=password filled")

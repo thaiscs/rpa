@@ -1,4 +1,5 @@
 from nicegui import ui
+import pages.login
 import pages.dashboard
 import pages.add_cert
 import pages.clients
