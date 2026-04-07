@@ -1,8 +1,8 @@
 version: "3.9"
 
 secrets:
-  aes_key:
-    file: ./aes_key.key
+  fernet_key:
+    file: ./fernet.key
 
 services:
   postgres:
@@ -51,11 +51,10 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_HOST: postgres
-      # AES_SECRET_KEY: "${AES_SECRET_KEY}"
     ports:
       - "8080:8080"
     secrets:
-      - aes_key
+      - fernet_key
     depends_on:
       - postgres
       - rabbitmq
@@ -86,7 +85,6 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_HOST: postgres
-      AES_SECRET_KEY: "${AES_SECRET_KEY}"
     depends_on:
       - rabbitmq
       - postgres

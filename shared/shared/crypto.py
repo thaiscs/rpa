@@ -1,12 +1,14 @@
 import os
 import logging
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-from cryptography.hazmat.primitives.serialization import pkcs12, Encoding, PrivateFormat, NoEncryption
-from cryptography.hazmat.primitives.serialization import BestAvailableEncryption
-from cryptography import x509
-from cryptography.hazmat.backends import default_backend
-from base64 import b64decode
 from pathlib import Path
+from base64 import b64decode, urlsafe_b64encode
+from cryptography import x509
+from cryptography.fernet import Fernet, InvalidToken
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.serialization import (
+    pkcs12, Encoding, PrivateFormat, NoEncryption
+)
+from cryptography.hazmat.primitives.serialization import pkcs12, Encoding, PrivateFormat, NoEncryption
 
 # -----------------------------
 # Logging
@@ -18,81 +20,52 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 # -----------------------------
-# Load AES key
+# Load Fernet key
 # -----------------------------
-def load_aes_key() -> bytes:
-    """
-    Load AES key from Docker secret or environment variable.
-    Supports:
-      - Docker secret at /run/secrets/aes_key
-      - Environment variable AES_SECRET_KEY (hex or base64)
-    Key must be 16, 24, or 32 bytes (AES-128/192/256)
-    """
-    key_file = Path("/run/secrets/aes_key")
-    key_env = os.getenv("AES_SECRET_KEY")
-    key: bytes | None = None
+def load_fernet_key() -> bytes:
+    key_file = Path("/run/secrets/fernet_key")
 
-    # Try Docker secret first
-    if key_file.exists():
-        log.info("Loading AES key from Docker secret")
-        key = key_file.read_bytes()
-    # Fall back to environment variable
-    elif key_env:
-        log.info("Loading AES key from environment variable")
-        key_env = key_env.strip()
-        try:
-            key = bytes.fromhex(key_env)  # hex first
-        except ValueError:
-            try:
-                key = b64decode(key_env)   # fallback to base64
-            except Exception as e:
-                raise RuntimeError(f"AES_SECRET_KEY is not valid hex or base64: {e}")
-    else:
-        raise RuntimeError("AES key not found in Docker secret or environment variable")
+    if not key_file.exists():
+        raise RuntimeError("Encryption key not found in Docker secret")
+    
+    # Must be 44 chars of URL-safe base64
+    try:
+        fernet_key = key_file.read_text().strip().encode()
+        Fernet(fernet_key)
+        return fernet_key
+    except Exception:
+        raise RuntimeError("Encryption key is not a valid Fernet key")
 
-    # Validate length
-    if len(key) not in (16, 24, 32):
-        raise RuntimeError(f"AESGCM key must be 128, 192, or 256 bits. Got {len(key)*8} bits")
-
-    log.info("AES key loaded successfully (%d bytes)", len(key))
-    return key
-
-AES_KEY = load_aes_key()
+FERNET_KEY = load_fernet_key()
+fernet = Fernet(FERNET_KEY)
 
 # -----------------------------
 # Encryption / Decryption
 # -----------------------------
-AES_VERSION = 1  # For future key rotation
-
 def encrypt(data: bytes) -> dict:
     """
-    Encrypt bytes using AES-GCM.
-    Returns JSON-compatible dict with nonce, ciphertext, version.
+    Encrypt bytes using Fernet.
+    Returns dict compatible with JSON.
     """
     log.info("Encrypting data...")
-    aesgcm = AESGCM(AES_KEY)
-    nonce = os.urandom(12)  # 96-bit unique nonce per encryption
-    ciphertext = aesgcm.encrypt(nonce, data, associated_data=None)
-
-    result = {
-        "version": AES_VERSION,
-        "nonce": nonce.hex(),
-        "ciphertext": ciphertext.hex()
-    }
+    token = fernet.encrypt(data)
     log.info("Encryption complete")
-    return result
+    return {
+        "version": 1,
+        "ciphertext": token.decode("utf-8")
+    }
 
-def decrypt(nonce_hex: str, ciphertext_hex: str) -> bytes:
+def decrypt(ciphertext: str) -> bytes:
     """
-    Decrypt JSON-compatible AES-GCM encrypted dict.
+    Decrypt data encrypted using Fernet.
     """
     log.info("Decrypting data...")
-    aesgcm = AESGCM(AES_KEY)
-    nonce = bytes.fromhex(nonce_hex)
-    ciphertext = bytes.fromhex(ciphertext_hex)
-    decrypted = aesgcm.decrypt(nonce, ciphertext, associated_data=None)
-    log.info("Decryption complete")
-    return decrypted
+    try:
+        decrypted = fernet.decrypt(ciphertext.encode("utf-8"))
+        log.info("Decryption complete")
+        return decrypted
+    except InvalidToken:
+        raise RuntimeError("Invalid encryption token or wrong key.")
 
 # -----------------------------
 # Extract cert/key from files
