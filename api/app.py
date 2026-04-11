@@ -4,8 +4,11 @@ import pika
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.responses import JSONResponse, PlainTextResponse
 from pydantic import BaseModel
-from shared.db import save_client_cert
+from fastapi import Depends
+from shared.crud import save_client_cert
 from shared.utils import get_person_type
+from shared.db import get_db
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logging.basicConfig(
     level=logging.INFO,
@@ -35,7 +38,8 @@ async def upload_cert(
     tax_id: str = Form(..., alias="CNPJ_CPF"),
     cert_name: str = Form(...),
     cert_password: str = Form(...),
-    cert_file: UploadFile = File(...)
+    cert_file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db)
 ):
     log.info("==== /upload-cert called ====")
 
@@ -46,7 +50,8 @@ async def upload_cert(
         file_bytes = await cert_file.read()
 
         # Save + encrypt via shared module
-        save_client_cert(
+        await save_client_cert(
+            db=db,
             legal_name=legal_name,
             tax_id=tax_id,
             cert_name=cert_name,

@@ -1,6 +1,6 @@
 from nicegui import ui, events
 import httpx
-from utils import validate_tax_id
+from helpers import validate_tax_id
 
 API_URL = "http://api:8080/upload-cert"  # docker compose api service name
 
@@ -87,7 +87,11 @@ async def submit_form(legal_name, tax_id, cert_name, cert_password, cert_file):
             dialog.open()
           uploaded_file = None  # reset
     else:
-        message = response.json().get("detail", "Erro desconhecido")
+        if response.status_code == 500:
+            message = "Erro interno do servidor"
+        else:
+            message = response.json().get("detail", "Erro desconhecido")
+
         # extract to failure dialog component/helper
         with ui.dialog() as dialog:
           with ui.card().classes("q-pa-md").style("align-items: flex-end;"):

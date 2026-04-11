@@ -12,10 +12,10 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-    command: >
-      postgres
-      -c log_statement=none
+      - postgres_data:/var/lib/postgresql/data
+    # command: >
+    #   postgres
+    #   -c log_statement=none
     ports:
       - "5432:5432"
     healthcheck:
@@ -56,8 +56,26 @@ services:
     secrets:
       - fernet_key
     depends_on:
-      - postgres
-      - rabbitmq
+      migrations:
+        condition: service_completed_successfully
+      # - rabbitmq:
+      #     condition: service_healthy
+
+  migrations:
+    build:
+      context: .
+      dockerfile: alembic/Dockerfile
+    volumes:
+      - ./alembic:/app/alembic
+      - ./shared/shared:/app/shared
+    environment:
+      POSTGRES_DB: certsdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   ui:
     build: ./ui
@@ -72,19 +90,23 @@ services:
     depends_on:
       - api
 
-  worker:
-    build: 
-      context: .
-      dockerfile: worker/Dockerfile
-    # volumes são montados para facilitar o desenvolvimento, mas em produção o código deve ser copiado para a imagem
-    volumes:
-      - ./worker:/app/worker
-      - ./shared/shared:/app/shared
-    environment:
-      POSTGRES_DB: certsdb
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_HOST: postgres
-    depends_on:
-      - rabbitmq
-      - postgres
+  # worker:
+  #   build: 
+  #     context: .
+  #     dockerfile: worker/Dockerfile
+  #   # volumes são montados para facilitar o desenvolvimento, mas em produção o código deve ser copiado para a imagem
+  #   volumes:
+  #     - ./worker:/app/worker
+  #     - ./shared/shared:/app/shared
+  #   environment:
+  #     POSTGRES_DB: certsdb
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: postgres
+  #     POSTGRES_HOST: postgres
+  #   depends_on:
+  #     - rabbitmq
+  #     - postgres
+
+# persistent thru restart
+volumes:
+  postgres_data:

@@ -18,6 +18,7 @@ config.json
 .DS_Store
 *.swp
 *.swo
+.venv
 
 # Dependencies
 node_modules/

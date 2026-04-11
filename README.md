@@ -33,6 +33,7 @@ docker compose up --build
 ### Other useful commands
 ```bash
 docker compose down --remove-orphans
+docker compose down -v (delete volumes)
 docker compose stop postgres
 docker compose rm -f postgres
 docker system prune -f
@@ -57,6 +58,9 @@ docker compose start postgres
 openssl rand 32 > ./aes_key.key
 docker exec -i rpa-postgres-1 psql -U postgres -d certsdb -c "SELECT * FROM clients;"
 docker exec -i rpa-postgres-1 psql -U postgres -d certsdb -c "\x \nSELECT * FROM certificates LIMIT 1;"
+docker exec -it rpa-postgres-1 psql -U postgres -d certsdb
+\dt
+\d+ clients
 ```
 
 The above command builds and starts the `api` and `worker` services.

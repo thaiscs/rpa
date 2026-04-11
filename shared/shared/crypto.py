@@ -54,7 +54,7 @@ def encrypt(data: bytes) -> dict:
         "version": 1,
         "ciphertext": token.decode("utf-8")
     }
-
+# TODO: test decryption
 def decrypt(ciphertext: str) -> bytes:
     """
     Decrypt data encrypted using Fernet.
