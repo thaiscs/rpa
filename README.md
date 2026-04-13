@@ -9,7 +9,7 @@
 
 ## Escalar
 
-- Implementar SQLAlchemy for parameterized queries and turn on postgres logging
+- Change certificate column from JSON to BYTEA for better security?
 - Implementar certificate_health_check expired (Certificados para RPA e-CAC in chatgpt)
 - Armazenar a chave de criptografia em um KMS (AWS KMS, HashiCorp Vault, Azure Key Vault).
 
@@ -39,28 +39,23 @@ docker compose rm -f postgres
 docker system prune -f
 docker compose build --no-cache web
 docker compose up --build --force-recreate
-docker compose up
 docker compose up --force-recreate
 docker compose ps -a
 docker compose images
 docker compose logs -f api
-docker compose exec api sh
-docker run --rm 4bd09f188804 pip list
-OR
-docker compose start
-OR
-docker start rpa-api-1
-docker logs rpa-api-1
-POSTGRES
+docker compose run migrations sh
+
+alembic revision --autogenerate -m "create initial tables"
+
 sudo lsof -i :5432
 sudo systemctl stop postgresql
-docker compose start postgres
-openssl rand 32 > ./aes_key.key
+
 docker exec -i rpa-postgres-1 psql -U postgres -d certsdb -c "SELECT * FROM clients;"
 docker exec -i rpa-postgres-1 psql -U postgres -d certsdb -c "\x \nSELECT * FROM certificates LIMIT 1;"
 docker exec -it rpa-postgres-1 psql -U postgres -d certsdb
 \dt
 \d+ clients
+docker exec -i rpa-postgres-1 psql -U postgres -d certsdb -c "SELECT tablename FROM pg_tables WHERE schemaname = 'public';"
 ```
 
 The above command builds and starts the `api` and `worker` services.
