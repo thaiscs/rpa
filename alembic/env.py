@@ -38,8 +38,10 @@ print("DB URL:", SYNC_DATABASE_URL)
 config.set_main_option("sqlalchemy.url", "postgresql+psycopg2://postgres:postgres@postgres:5432/certsdb")
 # add your model's MetaData object here
 # for 'autogenerate' support
+import shared.models.user
+import shared.models.client
+import shared.models.certificate
 from shared.db import Base
-import shared.models
 target_metadata = Base.metadata
 # target_metadata = None
 
