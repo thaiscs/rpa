@@ -1,14 +1,18 @@
 import json
 import logging
 import pika
+from pydantic import BaseModel
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.responses import JSONResponse, PlainTextResponse
-from pydantic import BaseModel
 from fastapi import Depends
 from shared.crud import save_client_cert
 from shared.utils import get_person_type
 from shared.db import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from api.auth.users import fastapi_users
+from api.auth.backend import auth_backend
+from api.auth.schemas import UserRead, UserCreate, UserUpdate
 
 logging.basicConfig(
     level=logging.INFO,
@@ -22,16 +26,35 @@ app = FastAPI(title="RPA Backend", version="1.0.0")
 # -----------------------------
 # Models
 # -----------------------------
-
 class JobPayload(BaseModel):
     job_type: str
     data: dict
 
 
 # -----------------------------
+# Auth routes
+# -----------------------------
+app.include_router(
+    fastapi_users.get_auth_router(auth_backend),
+    prefix="/auth/jwt",
+    tags=["auth"],
+)
+
+app.include_router(
+    fastapi_users.get_register_router(UserRead, UserCreate),
+    prefix="/auth",
+    tags=["auth"],
+)
+
+app.include_router(
+    fastapi_users.get_users_router(UserRead, UserUpdate),
+    prefix="/users",
+    tags=["users"],
+)
+
+# -----------------------------
 # Routes
 # -----------------------------
-
 @app.post("/upload-cert")
 async def upload_cert(
     legal_name: str = Form(..., alias="razao_social"),

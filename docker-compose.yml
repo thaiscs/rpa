@@ -3,6 +3,9 @@ version: "3.9"
 secrets:
   fernet_key:
     file: ./fernet.key
+  auth_secret:
+      file: ./auth.key
+    # external: true USE IN PROD WITH SWARM and `docker secret create auth_secret fernet.key`
 
 services:
   postgres:
@@ -51,10 +54,12 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_HOST: postgres
+      # AUTH_SECRET_FILE: "/run/secrets/auth_secret"
     ports:
       - "8080:8080"
     secrets:
       - fernet_key
+      - auth_secret
     depends_on:
       migrations:
         condition: service_completed_successfully

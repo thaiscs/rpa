@@ -1,10 +1,11 @@
 import uuid
 import enum
-from sqlalchemy import Column, String, Boolean, Text, TIMESTAMP, ForeignKey, JSON
+from sqlalchemy import Column, String, Boolean, String, TIMESTAMP, ForeignKey, JSON
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.dialects.postgresql import ENUM as PG_ENUM
 from sqlalchemy.sql import func
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, Mapped, mapped_column, mapped_column, relationship
+from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTableUUID
 from shared.db import Base
 
 
@@ -19,8 +20,8 @@ class Client(Base):
     __tablename__ = "clients"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    legal_name = Column(Text, nullable=False)
-    tax_id = Column(Text, nullable=False, unique=True)
+    legal_name = Column(String, nullable=False)
+    tax_id = Column(String, nullable=False, unique=True)
 
     person_type = Column(
         PG_ENUM(
@@ -43,14 +44,14 @@ class Certificate(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     client_id = Column(UUID(as_uuid=True), ForeignKey("clients.id", ondelete="CASCADE"), nullable=False)
-    name = Column(Text, nullable=False)
+    name = Column(String, nullable=False)
 
     encrypted_pfx = Column(JSON, nullable=False)
     encrypted_pfx_password = Column(JSON, nullable=False)
     encrypted_cert = Column(JSON, nullable=False)
     encrypted_key = Column(JSON, nullable=False)
 
-    issuer = Column(Text)
+    issuer = Column(String)
     valid_from = Column(TIMESTAMP(timezone=True))
     valid_to = Column(TIMESTAMP(timezone=True))
     expired = Column(Boolean, default=False)
@@ -59,3 +60,12 @@ class Certificate(Base):
     updated_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now())
 
     client = relationship("Client", back_populates="certificates")
+
+    
+class User(SQLAlchemyBaseUserTableUUID, Base):
+    __tablename__ = "users"
+
+    # FastAPI Users already includes: id, email, hashed_password, is_active, is_superuser, is_verified
+    # If you want custom fields, add them below:
+    name: Mapped[str | None] = mapped_column(String, nullable=True)
+    client_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("clients.id"), nullable=True)

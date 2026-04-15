@@ -2,17 +2,17 @@
 
 - aes_key.key file load in docker secrets
 - Https encryption/certificate: https://nicegui.io/documentation/section_configuration_deployment#server_hosting
-- Sanitize user inputs
+- Sanitize user inputs: pydantic?
 - Set secure cookies on auth
 - refactor compose, remove volumes
 - refactor dockerfiles with non-root user for security
 
 ## Escalar
 
-- Change certificate column from JSON to BYTEA for better security?
+- Change certificate column from JSON to BYTEA for better security
 - Implementar certificate_health_check expired (Certificados para RPA e-CAC in chatgpt)
 - Armazenar a chave de criptografia em um KMS (AWS KMS, HashiCorp Vault, Azure Key Vault).
-
+- Improve modularity of models (directory e.g. user.py, client.py, certificate.py)
 ## Overview
 
 This repository contains a small RPA (Robotic Process Automation) project with:
@@ -46,6 +46,8 @@ docker compose logs -f api
 docker compose run migrations sh
 
 alembic revision --autogenerate -m "create initial tables"
+alembic downgrade -1
+alembic history --verbose
 
 sudo lsof -i :5432
 sudo systemctl stop postgresql

@@ -39,6 +39,7 @@ config.set_main_option("sqlalchemy.url", "postgresql+psycopg2://postgres:postgre
 # add your model's MetaData object here
 # for 'autogenerate' support
 from shared.db import Base
+import shared.models
 target_metadata = Base.metadata
 # target_metadata = None
 

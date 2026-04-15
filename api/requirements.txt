@@ -1,4 +1,6 @@
 fastapi
+fastapi_users
+fastapi-users-db-sqlalchemy
 uvicorn
 python-multipart
 pika
