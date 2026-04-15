@@ -34,6 +34,7 @@ docker compose up --build
 ```bash
 docker compose down --remove-orphans
 docker compose down -v (delete volumes)
+docker volume rm rpa_secrets-store
 docker compose stop postgres
 docker compose rm -f postgres
 docker system prune -f

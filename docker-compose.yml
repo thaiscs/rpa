@@ -1,13 +1,20 @@
-version: "3.9"
-
-secrets:
-  fernet_key:
-    file: ./fernet.key
-  auth_secret:
-      file: ./auth.key
+# secrets:
+#   fernet_key:
+#     file: ./fernet.key
+#   auth_secret:
+#       file: ./auth.key
     # external: true USE IN PROD WITH SWARM and `docker secret create auth_secret fernet.key`
 
 services:
+  init-secrets:
+    image: python:3.12-slim
+    command: >
+      sh -c "pip install cryptography &&
+            python /scripts/init-secrets.py"
+    volumes:
+      - ./scripts:/scripts
+      - secrets-store:/secrets
+  
   postgres:
     image: postgres:16
     environment:
@@ -49,6 +56,7 @@ services:
     volumes:
       - ./api:/app/api
       - ./shared/shared:/app/shared
+      - secrets-store:/run/secrets
     environment:
       POSTGRES_DB: certsdb
       POSTGRES_USER: postgres
@@ -57,10 +65,12 @@ services:
       # AUTH_SECRET_FILE: "/run/secrets/auth_secret"
     ports:
       - "8080:8080"
-    secrets:
-      - fernet_key
-      - auth_secret
+    # secrets:
+    #   - fernet_key
+    #   - auth_secret
     depends_on:
+      init-secrets: 
+        condition: service_completed_successfully
       migrations:
         condition: service_completed_successfully
       # - rabbitmq:
@@ -115,3 +125,4 @@ services:
 # persistent thru restart
 volumes:
   postgres_data:
+  secrets-store:

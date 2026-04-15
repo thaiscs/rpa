@@ -23,10 +23,10 @@ log = logging.getLogger(__name__)
 # Load Fernet key
 # -----------------------------
 def load_fernet_key() -> bytes:
-    key_file = Path("/run/secrets/fernet_key")
+    key_file = Path("/run/secrets/fernet.key")
 
     if not key_file.exists():
-        raise RuntimeError("Encryption key not found in Docker secret")
+        raise RuntimeError("Encryption key not found in Docker secret volume")
     
     # Must be 44 chars of URL-safe base64
     try:
