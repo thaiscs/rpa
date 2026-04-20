@@ -1,6 +1,8 @@
-from nicegui import ui
+from nicegui import ui, app
 import httpx
 from components.cert_form import API_URL, parse_err, toast_err
+
+LOGIN_URL = "http://api:8080/auth/jwt/login"  # FastAPI Users endpoint
 
 @ui.page("/login")
 def login_form():
@@ -35,11 +37,19 @@ async def submit_form(email, password):
             }
 
     async with httpx.AsyncClient() as client:
-      response = await client.post(API_URL, data=form_data)
+      response = await client.post(LOGIN_URL, data=form_data)
     print("RESP: ==>", response.json(), response.status_code)
     if response.status_code == 200:
+        data = response.json()
         ui.notify("Logged in successfully!", color="green")
         ui.open("/")
+        
+        # store session
+        app.storage.user = {
+            "email": email.value,
+            "access_token": data["access_token"],
+            "token_type": data["token_type"],
+        }
     else:
         # extract to error dialog component/helper
         message = response.json().get("detail", "Erro desconhecido")

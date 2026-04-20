@@ -1,7 +1,8 @@
 from sqlalchemy import select, insert
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
-from shared.models import Client, Certificate
+from shared.models.client import Client
+from shared.models.certificate import Certificate
 from shared.crypto import encrypt, decrypt, extract_pfx_components, extract_cert_metadata
 import logging
 

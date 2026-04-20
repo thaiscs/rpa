@@ -12,4 +12,4 @@ ENV PYTHONPATH=/app
 
 # FastAPI server
 # TODO: remove reload in production
-CMD ["uvicorn", "api.app:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]
+CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]

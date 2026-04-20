@@ -1,6 +1,6 @@
 from nicegui import ui, events
 import httpx
-from helpers import validate_tax_id
+from helpers.validation import validate_tax_id
 
 API_URL = "http://api:8080/upload-cert"  # docker compose api service name
 

@@ -10,9 +10,9 @@
 ## Escalar
 
 - Change certificate column from JSON to BYTEA for better security
+- Role-based navigation sidebar (admin/client separation)
 - Implementar certificate_health_check expired (Certificados para RPA e-CAC in chatgpt)
 - Armazenar a chave de criptografia em um KMS (AWS KMS, HashiCorp Vault, Azure Key Vault).
-- Improve modularity of models (directory e.g. user.py, client.py, certificate.py)
 ## Overview
 
 This repository contains a small RPA (Robotic Process Automation) project with:
@@ -46,7 +46,7 @@ docker compose images
 docker compose logs -f api
 docker compose run migrations sh
 
-alembic revision --autogenerate -m "create initial tables"
+alembic revision --autogenerate -m "create users auth table"
 alembic downgrade -1
 alembic history --verbose
 

@@ -4,7 +4,7 @@ import uuid
 
 from api.auth.manager import get_user_manager
 from api.auth.backend import auth_backend
-from shared.models import User
+from shared.models.user import User
 
 fastapi_users = FastAPIUsers[User, uuid.UUID](
     get_user_manager,

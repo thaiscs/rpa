@@ -31,7 +31,7 @@ class Client(Base):
         default=PersonTypeEnum.company
     )
 
-    created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
-    updated_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now())
+    updated_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
 
     certificates = relationship("Certificate", back_populates="client", cascade="all, delete-orphan")

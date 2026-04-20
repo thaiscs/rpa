@@ -7,10 +7,9 @@
 
 services:
   init-secrets:
-    image: python:3.12-slim
-    command: >
-      sh -c "pip install cryptography &&
-            python /scripts/init-secrets.py"
+    build:
+      context: .
+      dockerfile: scripts/Dockerfile
     volumes:
       - ./scripts:/scripts
       - secrets-store:/secrets
@@ -56,7 +55,7 @@ services:
     volumes:
       - ./api:/app/api
       - ./shared/shared:/app/shared
-      - secrets-store:/run/secrets
+      - secrets-store:/secrets
     environment:
       POSTGRES_DB: certsdb
       POSTGRES_USER: postgres
@@ -99,6 +98,7 @@ services:
     # remove on Production, copy files to image instead
     volumes:
       - ./ui:/app
+      - secrets-store:/secrets
     environment:
       - PYTHONUNBUFFERED=1
     command: python main.py --reload
