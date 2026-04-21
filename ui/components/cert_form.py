@@ -1,6 +1,8 @@
 from nicegui import ui, events
 import httpx
 from helpers.validation import validate_tax_id
+from components.err_toast import toast_err
+from components.err_dialog import show_error_dialog
 
 API_URL = "http://api:8080/upload-cert"  # docker compose api service name
 
@@ -11,35 +13,6 @@ def handle_upload(e: events.UploadEventArguments):
     uploaded_file = e.file
     ui.notify(f"Arquivo '{uploaded_file.name}' carregado com sucesso!", color="positive")
 
-def toast_err(message: str, duration: int = 3000):
-    ui.notify(
-        message,
-        color="negative",
-        position="top",
-        timeout=duration,
-        transition_show="slide-down",
-        transition_hide="slide-up"
-    )
-
-def parse_err(message: str | dict) -> str:
-    # If message is a dict, try to extract a meaningful string
-    if isinstance(message, dict):
-        # Common key 'detail', fallback to first value or empty string
-        message_text = message.get("detail") or next(iter(message.values()), "")
-    else:
-        message_text = message
-
-    # Normalize to lowercase for keyword checks
-    lower_msg = message_text.lower()
-
-    if "invalid" in lower_msg:
-        return "Arquivo ou senha do certificado inválidos."
-    elif "missing" in lower_msg:
-        return "Todos os campos são obrigatórios."
-    elif "cnpj/cpf" in lower_msg:
-        return "CNPJ/CPF inválido. Deve conter 11 ou 14 dígitos."
-    
-    return message_text  # fallback
 
 async def submit_form(legal_name, tax_id, cert_name, cert_password, cert_file):
     # Validation
@@ -92,12 +65,7 @@ async def submit_form(legal_name, tax_id, cert_name, cert_password, cert_file):
         else:
             message = response.json().get("detail", "Erro desconhecido")
 
-        # extract to failure dialog component/helper
-        with ui.dialog() as dialog:
-          with ui.card().classes("q-pa-md").style("align-items: flex-end;"):
-            ui.button().props("icon=close color=gray flat round").on("click", lambda: dialog.close())
-            ui.label("ERRO: " + parse_err(message)).classes("text-negative text-h6 q-pb-lg")
-            dialog.open()
+            show_error_dialog(message)
 
 def cert_form():
     with ui.element("q-card").classes("q-pa-xl shadow-3 rounded-borders bg-white w-full display-flex flex-column items-center"):

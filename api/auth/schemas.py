@@ -1,14 +1,15 @@
 from fastapi_users import schemas
-import uuid
+from uuid import UUID
+from typing import Optional
 
-class UserRead(schemas.BaseUser[uuid.UUID]):
+class UserRead(schemas.BaseUser[UUID]):
     name: str | None = None
-    client_id: uuid.UUID
+    client_id: Optional[UUID] = None
 
 class UserCreate(schemas.BaseUserCreate):
     name: str | None = None
-    client_id: uuid.UUID
+    client_id: Optional[UUID] = None
 
 class UserUpdate(schemas.BaseUserUpdate):
     name: str | None = None
-    client_id: uuid.UUID
+    client_id: Optional[UUID] = None

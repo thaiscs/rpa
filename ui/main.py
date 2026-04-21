@@ -1,10 +1,14 @@
 from nicegui import ui
+from pathlib import Path
 import pages.login
 import pages.dashboard
 import pages.add_cert
 import pages.clients
 import pages.ecac
-from pathlib import Path
+import pages.login
+import pages.signup
+import pages.forgot_password
+import pages.reset_password
 
 class Secrets:
     @staticmethod

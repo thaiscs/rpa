@@ -1,60 +1,84 @@
 from nicegui import ui, app
 import httpx
-from components.cert_form import API_URL, parse_err, toast_err
+from helpers.parsing import parse_err
+from components.err_toast import toast_err
 
-LOGIN_URL = "http://api:8080/auth/jwt/login"  # FastAPI Users endpoint
+LOGIN_URL = "http://api:8080/login"
+
 
 @ui.page("/login")
-def login_form():
-  with ui.element('div').classes('flex justify-center items-center min-h-screen w-full bg-[#091E2F]'):
-
-    with ui.element('q-card').classes(
-        'q-pa-xl shadow-3 rounded-borders bg-white flex flex-col items-center w-full max-w-md'
+def login_page():
+    with ui.element("div").classes(
+        "flex justify-center items-center min-h-screen w-full bg-[#091E2F]"
     ):
-        ui.label("Cadastrar Cliente e Certificado").classes("text-h4 q-mb-md text-center")
+        with ui.element("q-card").classes(
+            "q-pa-xl shadow-3 rounded-borders bg-white flex flex-col items-center "
+            "w-full max-w-md"
+        ):
+            ui.label("Login").classes("text-h4 q-mb-md text-center")
 
-        email = ui.input("Email").props("type=email filled").classes("w-full q-mb-md")
-        password = ui.input("Senha", password_toggle_button=True).props("type=password filled").classes("w-full q-mb-md")
+            email = (
+                ui.input("Email")
+                .props("type=email filled")
+                .classes("w-full q-mb-md")
+            )
 
-        ui.button(
-            "Login",
-            on_click=lambda: submit_form(email, password)
-        ).props("flat").classes(
-            "bg-[#CEB690] text-white hover:bg-[#93713C] transition-all q-pa-md rounded w-full"
-        )
-      # ui.link("Forgot password?", "/forgot-password")
-      # ui.link("Sign Up", "/signup")
+            password = (
+                ui.input("Senha", password_toggle_button=True)
+                .props("type=password filled")
+                .classes("w-full q-mb-md")
+            )
+
+            ui.button(
+                "Login",
+                on_click=lambda: handle_login(email, password),
+            ).props("flat").classes(
+                "bg-[#CEB690] text-white hover:bg-[#93713C] "
+                "transition-all q-pa-md rounded w-full"
+            )
+
+            ui.link("Forgot password?", "/forgot-password").classes("mt-4")
+            ui.link("Sign Up", "/signup").classes("mt-1")
 
 
-async def submit_form(email, password):
+async def handle_login(email, password):
+    """Send credentials → store token → redirect"""
     if not email.value or not password.value:
-      toast_err("Todos os campos são obrigatórios")
-      return
+        toast_err("Todos os campos são obrigatórios")
+        return
 
-    form_data = {
-                "email": email.value,
-                "password": password.value
-            }
-
+    payload = {
+        "email": email.value,
+        "password": password.value,
+    }
+    print("Payload ==> ", payload, email)
     async with httpx.AsyncClient() as client:
-      response = await client.post(LOGIN_URL, data=form_data)
-    print("RESP: ==>", response.json(), response.status_code)
+        response = await client.post(LOGIN_URL, data=payload)
+
+    print("RESP ==> ", response.json(), response.status_code)
+
     if response.status_code == 200:
         data = response.json()
-        ui.notify("Logged in successfully!", color="green")
-        ui.open("/")
-        
-        # store session
+
+        # Store JWT securely
         app.storage.user = {
             "email": email.value,
-            "access_token": data["access_token"],
+            "token": data["access_token"],
             "token_type": data["token_type"],
         }
+
+        ui.notify("Logged in successfully!", color="green")
+
+        # Trigger redirect AFTER the notify
+        ui.timer(0.5, lambda: ui.navigate.to("/adicionar-certificado"))
     else:
-        # extract to error dialog component/helper
-        message = response.json().get("detail", "Erro desconhecido")
+        err = response.json().get("detail")
+        message = parse_err(err)
+
         with ui.dialog() as dialog:
-          with ui.card().classes("q-pa-md").style("align-items: flex-end;"):
-            ui.button().props("icon=close color=gray flat round").on("click", lambda: dialog.close())
-            ui.label("ERRO: " + parse_err(message)).classes("text-negative text-h6 q-pb-lg")
-            dialog.open()
+            with ui.card().classes("q-pa-md").style("align-items: flex-end;"):
+                ui.button().props("icon=close color=gray flat round").on(
+                    "click", dialog.close
+                )
+                ui.label("ERRO: " + parse_err(message)).classes("text-negative text-h6 q-pb-lg")
+                dialog.open()
