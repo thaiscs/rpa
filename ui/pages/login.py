@@ -2,8 +2,9 @@ from nicegui import ui, app
 import httpx
 from helpers.parsing import parse_err
 from components.err_toast import toast_err
+from helpers.auth import Auth
 
-LOGIN_URL = "http://api:8080/login"
+LOGIN_URL = "http://api:8080/auth/jwt/login"
 
 
 @ui.page("/login")
@@ -48,29 +49,25 @@ async def handle_login(email, password):
         return
 
     payload = {
-        "email": email.value,
+        "username": email.value,
         "password": password.value,
     }
-    print("Payload ==> ", payload, email)
+
     async with httpx.AsyncClient() as client:
         response = await client.post(LOGIN_URL, data=payload)
 
-    print("RESP ==> ", response.json(), response.status_code)
+        print("RESP ==> ", response, response.status_code)
 
     if response.status_code == 200:
         data = response.json()
 
-        # Store JWT securely
-        app.storage.user = {
-            "email": email.value,
-            "token": data["access_token"],
-            "token_type": data["token_type"],
-        }
-
+        print("DATA ==> ", data)
+        Auth.login(data["access_token"])
+        print(f"Auth.is_logged_in(): {Auth.is_logged_in()}")
         ui.notify("Logged in successfully!", color="green")
 
         # Trigger redirect AFTER the notify
-        ui.timer(0.5, lambda: ui.navigate.to("/adicionar-certificado"))
+        ui.timer(0.5, lambda: ui.navigate.to("/cadastrar-certificado"))
     else:
         err = response.json().get("detail")
         message = parse_err(err)

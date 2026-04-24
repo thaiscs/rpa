@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, APIRouter
+from fastapi import FastAPI
 
 from api.routes import router as public_router
 from api.admin.routes import router as admin_router
@@ -6,7 +6,6 @@ from api.admin.routes import router as admin_router
 from api.auth.users import fastapi_users
 from api.auth.backend import auth_backend
 from api.auth.schemas import UserRead, UserCreate, UserUpdate
-from api.auth.deps import current_admin
 
 app = FastAPI(title="RPA Backend", version="1.0.0")
 
@@ -14,11 +13,11 @@ app = FastAPI(title="RPA Backend", version="1.0.0")
 # AUTH ROUTES
 # -----------------------------
 # LOGIN
-# app.include_router(
-#     fastapi_users.get_auth_router(auth_backend),
-#     prefix="/auth/jwt",
-#     tags=["auth"],
-# )
+app.include_router(
+    fastapi_users.get_auth_router(auth_backend),
+    prefix="/auth/jwt",
+    tags=["auth"],
+)
 
 # SIGNUP
 app.include_router(
@@ -36,9 +35,16 @@ app.include_router(
 
 # USERS
 app.include_router(
-    fastapi_users.get_users_router(UserRead, UserUpdate),
+    fastapi_users.get_users_router(UserRead, UserUpdate, requires_verification=True),
     prefix="/users",
     tags=["users"],
+)
+
+# VERIFY EMAIL
+app.include_router(
+    fastapi_users.get_verify_router(UserRead),
+    prefix="/auth",
+    tags=["auth"],
 )
 
 # -----------------------------

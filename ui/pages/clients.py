@@ -1,7 +1,8 @@
 from nicegui import ui
 from components.sidebar import sidebar
+from helpers.auth import protected
 
-@ui.page("/clients")
+@protected("/clients")
 def clients():
     with ui.row().classes("w-full"):
         sidebar()

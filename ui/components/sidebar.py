@@ -23,10 +23,10 @@ def sidebar():
                 ui.link(text, url).classes('text-gray-100 text-xl no-underline hover:text-white')
 
         # Home icon for Dashboard
-        nav_link('house', 'Dashboard', '/')
+        nav_link('house', 'Dashboard', '/dashboard')
 
         # Certificate/file icon for Add Cert
-        nav_link('file-earmark-lock', 'Cadastrar Certificado', '/add-cert')
+        nav_link('file-earmark-lock', 'Cadastrar Certificado', '/cadastrar-certificado')
 
         # Notifications icon + e-CAC text
         with ui.row().classes(

@@ -98,10 +98,8 @@ services:
     # remove on Production, copy files to image instead
     volumes:
       - ./ui:/app
-      - secrets-store:/secrets
     environment:
       - PYTHONUNBUFFERED=1
-    command: python main.py --reload
     depends_on:
       - api
 

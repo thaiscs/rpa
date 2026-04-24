@@ -62,7 +62,7 @@ async def handle_signup(email, password, confirm):
 
     if response.status_code == 201:
         ui.notify("Conta criada com sucesso!", color="green")
-        ui.timer(0.5, lambda: ui.navigate.to("/adicionar-certificado"))
+        ui.timer(0.5, lambda: ui.navigate.to("/cadastrar-certificado"))
 
     else:
         message = parse_err(response.json().get("detail"))

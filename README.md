@@ -1,16 +1,14 @@
 ## Deployment - checklist:
 
-- aes_key.key file load in docker secrets
 - Https encryption/certificate: https://nicegui.io/documentation/section_configuration_deployment#server_hosting
-- Sanitize user inputs: pydantic?
-- Set secure cookies on auth
+- Sanitize user inputs: pydantics doing it?
 - refactor compose, remove volumes
 - refactor dockerfiles with non-root user for security
 
 ## Escalar
 
 - Change certificate column from JSON to BYTEA for better security
-- Role-based navigation sidebar (admin/client separation)
+- Role-based navigation client tenancy
 - Implementar certificate_health_check expired (Certificados para RPA e-CAC in chatgpt)
 - Armazenar a chave de criptografia em um KMS (AWS KMS, HashiCorp Vault, Azure Key Vault).
 ## Overview

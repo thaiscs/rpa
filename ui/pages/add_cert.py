@@ -1,10 +1,10 @@
 from nicegui import ui
-from helpers.auth import admin_page
+from helpers.auth import protected
 
 from components.sidebar import sidebar
 from components.cert_form import cert_form
 
-@admin_page("/adicionar-certificado")
+@protected("/cadastrar-certificado")
 def add_cert():
     with ui.row().classes("w-[85%]"):
         sidebar()
