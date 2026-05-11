@@ -8,8 +8,11 @@ bearer_transport = BearerTransport(tokenUrl="auth/jwt/login")
 
 from api.auth.config import SECRET
 
+SESSION_LIFETIME_SECONDS = 8 * 60 * 60
+
+
 def get_jwt_strategy() -> JWTStrategy:
-    return JWTStrategy(secret=SECRET, lifetime_seconds=3600)
+    return JWTStrategy(secret=SECRET, lifetime_seconds=SESSION_LIFETIME_SECONDS)
 
 auth_backend = AuthenticationBackend(
     name="jwt",
