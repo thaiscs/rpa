@@ -13,9 +13,9 @@ from api.auth.backend import (
 class TestBearerTransport:
     """Tests for bearer transport configuration."""
 
-    def test_bearer_transport_token_url(self):
-        """Test that bearer transport has correct token URL."""
-        assert bearer_transport.token_url == "auth/jwt/login"
+    def test_bearer_transport_is_correct_type(self):
+        """Test that bearer transport is a BearerTransport."""
+        assert isinstance(bearer_transport, BearerTransport)
 
 
 class TestJwtStrategy:

@@ -84,12 +84,12 @@ class TestAuthFetchUser:
     @pytest.mark.asyncio
     async def test_fetch_user_success(self, mock_app_storage):
         """Test successful user fetch."""
+        response = MagicMock()
+        response.status_code = 200
+        response.json.return_value = {"id": "123", "email": "test@example.com"}
+
         inner_client = AsyncMock()
-        inner_client.get.return_value.status_code = 200
-        inner_client.get.return_value.json.return_value = {
-            "id": "123",
-            "email": "test@example.com"
-        }
+        inner_client.get.return_value = response
 
         mock_client_cls = MagicMock()
         mock_client_cls.return_value.__aenter__ = AsyncMock(return_value=inner_client)
