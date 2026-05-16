@@ -45,9 +45,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements-test.txt
-        pip install -r api/requirements.txt || true
-        pip install -r shared/requirements.txt || true
-        pip install -r ui/requirements.txt || true
+        pip install -r api/requirements.txt
 
     - name: Run tests
       env:
