@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from cryptography.fernet import Fernet
 
@@ -10,7 +11,7 @@ def ensure(path: Path):
     path.write_bytes(key)
     print(f"generated {path.name}")
 
-base = Path("/secrets")
+base = Path(os.getenv("SECRETS_DIR", "/secrets"))
 base.mkdir(parents=True, exist_ok=True)
 
 ensure(base / "fernet.key")

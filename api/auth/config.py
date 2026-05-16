@@ -1,10 +1,12 @@
+import os
 from pathlib import Path
 
 def load_secret() -> str:
-    key_file = Path("/secrets/auth.key")
+    secrets_dir = Path(os.getenv("SECRETS_DIR", "/secrets"))
+    key_file = secrets_dir / "auth.key"
 
     if not key_file.exists():
-        raise RuntimeError("Authentication key not found in /secrets volume")
+        raise RuntimeError(f"Authentication key not found in {secrets_dir}")
 
     return key_file.read_text().strip()
 

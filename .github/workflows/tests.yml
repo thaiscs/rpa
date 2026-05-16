@@ -47,6 +47,11 @@ jobs:
         pip install -r requirements-test.txt
         pip install -r api/requirements.txt
 
+    - name: Create test secrets
+      env:
+        SECRETS_DIR: ${{ github.workspace }}/secrets
+      run: python scripts/init-secrets.py
+
     - name: Run tests
       env:
         POSTGRES_DB: certsdb_test
@@ -54,6 +59,7 @@ jobs:
         POSTGRES_PASSWORD: test_pass
         POSTGRES_HOST: localhost
         POSTGRES_PORT: 5432
+        SECRETS_DIR: ${{ github.workspace }}/secrets
       run: |
         pytest -v --cov=. --cov-report=xml --cov-report=html
 
