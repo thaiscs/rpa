@@ -50,39 +50,38 @@ MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC...
 class TestLoadFernetKey:
     """Tests for load_fernet_key function."""
 
-    def test_load_valid_key(self, tmp_path, test_fernet_key):
+    def test_load_valid_key(self, tmp_path, test_fernet_key, monkeypatch):
         """Test loading a valid Fernet key."""
+        monkeypatch.setenv("SECRETS_DIR", str(tmp_path))
         key_file = tmp_path / "fernet.key"
         key_file.write_bytes(test_fernet_key)
 
-        with patch("shared.crypto.Path", return_value=key_file):
-            result = load_fernet_key()
-            assert result == test_fernet_key
+        result = load_fernet_key()
+        assert result == test_fernet_key
 
-    def test_load_key_strips_whitespace(self, tmp_path, test_fernet_key):
+    def test_load_key_strips_whitespace(self, tmp_path, test_fernet_key, monkeypatch):
         """Test that whitespace is stripped from key."""
+        monkeypatch.setenv("SECRETS_DIR", str(tmp_path))
         key_file = tmp_path / "fernet.key"
         key_file.write_text(f"  {test_fernet_key.decode()}  \n")
 
-        with patch("shared.crypto.Path", return_value=key_file):
-            result = load_fernet_key()
-            assert result == test_fernet_key
+        result = load_fernet_key()
+        assert result == test_fernet_key
 
-    def test_load_key_missing_file(self):
+    def test_load_key_missing_file(self, monkeypatch):
         """Test error when key file doesn't exist."""
-        with patch("shared.crypto.Path") as mock_path:
-            mock_path.return_value.exists.return_value = False
-            with pytest.raises(RuntimeError, match="Encryption key not found"):
-                load_fernet_key()
+        monkeypatch.setenv("SECRETS_DIR", "/nonexistent/path/that/does/not/exist")
+        with pytest.raises(RuntimeError, match="Encryption key not found"):
+            load_fernet_key()
 
-    def test_load_key_invalid_format(self, tmp_path):
+    def test_load_key_invalid_format(self, tmp_path, monkeypatch):
         """Test error when key is not a valid Fernet key."""
+        monkeypatch.setenv("SECRETS_DIR", str(tmp_path))
         key_file = tmp_path / "fernet.key"
         key_file.write_text("invalid_key")
 
-        with patch("shared.crypto.Path", return_value=key_file):
-            with pytest.raises(RuntimeError, match="not a valid Fernet key"):
-                load_fernet_key()
+        with pytest.raises(RuntimeError, match="not a valid Fernet key"):
+            load_fernet_key()
 
 
 class TestEncrypt:

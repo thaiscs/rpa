@@ -18,11 +18,11 @@ def parse_err(message: str | dict | list ) -> str:
     # Normalize to lowercase for keyword checks
     lower_msg = message_text.lower()
 
-    if "invalid" in lower_msg:
+    if "cnpj/cpf" in lower_msg:
+        return "CNPJ/CPF inválido. Deve conter 11 ou 14 dígitos."
+    elif "invalid" in lower_msg:
         return "Arquivo ou senha do certificado inválidos."
     elif "missing" in lower_msg:
         return "Todos os campos são obrigatórios."
-    elif "cnpj/cpf" in lower_msg:
-        return "CNPJ/CPF inválido. Deve conter 11 ou 14 dígitos."
     
     return message_text  # fallback

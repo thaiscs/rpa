@@ -82,26 +82,36 @@ class TestAuthFetchUser:
     """Tests for Auth.fetch_user method."""
 
     @pytest.mark.asyncio
-    async def test_fetch_user_success(self, mock_app_storage, mock_httpx_client):
+    async def test_fetch_user_success(self, mock_app_storage):
         """Test successful user fetch."""
-        mock_httpx_client.get.return_value.status_code = 200
-        mock_httpx_client.get.return_value.json.return_value = {
+        inner_client = AsyncMock()
+        inner_client.get.return_value.status_code = 200
+        inner_client.get.return_value.json.return_value = {
             "id": "123",
             "email": "test@example.com"
         }
 
-        with patch("ui.helpers.auth.httpx.AsyncClient", return_value=mock_httpx_client), \
+        mock_client_cls = MagicMock()
+        mock_client_cls.return_value.__aenter__ = AsyncMock(return_value=inner_client)
+        mock_client_cls.return_value.__aexit__ = AsyncMock(return_value=False)
+
+        with patch("ui.helpers.auth.httpx.AsyncClient", mock_client_cls), \
              patch("ui.helpers.auth.app", MagicMock(storage=mock_app_storage)):
 
             await Auth.fetch_user("valid_token")
             assert mock_app_storage.user["user"]["email"] == "test@example.com"
 
     @pytest.mark.asyncio
-    async def test_fetch_user_failure(self, mock_app_storage, mock_httpx_client):
+    async def test_fetch_user_failure(self, mock_app_storage):
         """Test user fetch on API failure."""
-        mock_httpx_client.get.side_effect = Exception("API error")
+        inner_client = AsyncMock()
+        inner_client.get.side_effect = Exception("API error")
 
-        with patch("ui.helpers.auth.httpx.AsyncClient", return_value=mock_httpx_client), \
+        mock_client_cls = MagicMock()
+        mock_client_cls.return_value.__aenter__ = AsyncMock(return_value=inner_client)
+        mock_client_cls.return_value.__aexit__ = AsyncMock(return_value=False)
+
+        with patch("ui.helpers.auth.httpx.AsyncClient", mock_client_cls), \
              patch("ui.helpers.auth.app", MagicMock(storage=mock_app_storage)):
 
             await Auth.fetch_user("valid_token")

@@ -136,8 +136,8 @@ class TestFetchClientCert:
         mock_cert.encrypted_cert = {"nonce": "nonce1", "ciphertext": "cert_cipher"}
         mock_cert.encrypted_key = {"nonce": "nonce2", "ciphertext": "key_cipher"}
 
-        # Mock database query
-        mock_result = AsyncMock()
+        # Mock database query — use MagicMock so scalars().first() is synchronous
+        mock_result = MagicMock()
         mock_result.scalars.return_value.first.return_value = mock_cert
         db_session.execute = AsyncMock(return_value=mock_result)
 
@@ -153,8 +153,8 @@ class TestFetchClientCert:
         """Test that fetching non-existent client raises error."""
         client_id = uuid.uuid4()
 
-        # Mock empty result
-        mock_result = AsyncMock()
+        # Mock empty result — use MagicMock so scalars().first() is synchronous
+        mock_result = MagicMock()
         mock_result.scalars.return_value.first.return_value = None
         db_session.execute = AsyncMock(return_value=mock_result)
 

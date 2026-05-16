@@ -15,7 +15,7 @@ class TestBearerTransport:
 
     def test_bearer_transport_token_url(self):
         """Test that bearer transport has correct token URL."""
-        assert bearer_transport.tokenUrl == "auth/jwt/login"
+        assert bearer_transport.token_url == "auth/jwt/login"
 
 
 class TestJwtStrategy:
@@ -35,14 +35,14 @@ class TestJwtStrategy:
         """Test that JWT strategy uses the correct secret."""
         with patch("api.auth.backend.SECRET", "test_secret"):
             strategy = get_jwt_strategy()
-            assert strategy._secret == "test_secret"
+            assert strategy.secret == "test_secret"
 
     @patch("api.auth.backend.SECRET", "test_secret")
     def test_jwt_strategy_uses_correct_lifetime(self):
         """Test that JWT strategy uses correct lifetime."""
         with patch("api.auth.backend.SECRET", "test_secret"):
             strategy = get_jwt_strategy()
-            assert strategy._lifetime_seconds == SESSION_LIFETIME_SECONDS
+            assert strategy.lifetime_seconds == SESSION_LIFETIME_SECONDS
 
 
 class TestAuthBackend:

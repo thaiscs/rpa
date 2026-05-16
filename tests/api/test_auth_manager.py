@@ -9,11 +9,10 @@ class TestUserManager:
     """Tests for UserManager class."""
 
     def test_user_manager_has_secrets(self):
-        """Test that UserManager has correct secrets configured."""
-        with patch("api.auth.manager.SECRET", "test_secret"):
-            manager = UserManager(None)
-            assert manager.reset_password_token_secret == "test_secret"
-            assert manager.verification_token_secret == "test_secret"
+        """Test that UserManager class attributes are tied to the loaded SECRET."""
+        from api.auth.config import SECRET
+        assert UserManager.reset_password_token_secret == SECRET
+        assert UserManager.verification_token_secret == SECRET
 
 
 class TestGetUserManager:
