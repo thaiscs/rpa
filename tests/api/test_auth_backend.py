@@ -31,7 +31,6 @@ class TestJwtStrategy:
         strategy = get_jwt_strategy()
         assert isinstance(strategy, JWTStrategy)
 
-    @patch("api.auth.backend.SECENT", "test_secret")
     def test_jwt_strategy_uses_correct_secret(self):
         """Test that JWT strategy uses the correct secret."""
         with patch("api.auth.backend.SECRET", "test_secret"):

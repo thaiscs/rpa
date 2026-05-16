@@ -1,24 +1,8 @@
 import pytest
-import uuid
 from unittest.mock import AsyncMock, patch, MagicMock
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.auth.manager import UserManager, get_user_manager
 from shared.models.user import User
-
-
-@pytest.fixture
-def mock_db_session():
-    """Create a mock async session for testing."""
-    session = AsyncMock(spec=AsyncSession)
-    return session
-
-
-@pytest.fixture
-def mock_user_database():
-    """Create a mock SQLAlchemyUserDatabase."""
-    db = MagicMock()
-    return db
 
 
 class TestUserManager:

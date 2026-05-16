@@ -8,21 +8,10 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements
-COPY requirements-test.txt .
+# Copy requirements before source so Docker can cache this layer
+COPY requirements-test.txt api/requirements.txt ./api/
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements-test.txt
-
-# Install additional dependencies needed for tests
-RUN pip install --no-cache-dir \
-    fastapi \
-    fastapi-users \
-    sqlalchemy \
-    alembic \
-    cryptography \
-    httpx \
-    nicegui
+RUN pip install --no-cache-dir -r requirements-test.txt -r api/requirements.txt
 
 # Copy source code
 COPY . .

@@ -79,9 +79,7 @@ def sample_certificate_data():
 def mock_db_session():
     """Create a mock async session for testing."""
     session = AsyncMock()
-    session.begin = MagicMock()
-    session.begin().__aenter__ = AsyncMock()
-    session.begin().__aexit__ = AsyncMock()
+    session.begin = MagicMock(return_value=AsyncMock())
     return session
 
 

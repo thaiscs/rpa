@@ -12,9 +12,7 @@ from shared.models.certificate import Certificate
 async def db_session():
     """Create a mock async session for testing."""
     session = AsyncMock(spec=AsyncSession)
-    session.begin = MagicMock()
-    session.begin().__aenter__ = AsyncMock()
-    session.begin().__aexit__ = AsyncMock()
+    session.begin = MagicMock(return_value=AsyncMock())
     return session
 
 
@@ -59,19 +57,14 @@ class TestSaveClientCert:
         mock_encrypt.side_effect = lambda x: {"version": 1, "ciphertext": x.decode()}
         mock_extract_metadata.return_value = ("CN=Test", "2024-01-01", "2025-01-01")
 
-        # Mock database execution
+        # Mock database execution — first call returns client_id, second returns cert_id
         client_id = uuid.uuid4()
         cert_id = uuid.uuid4()
 
-        async def mock_execute(stmt):
-            result = AsyncMock()
-            if "client" in str(stmt).lower():
-                result.scalar_one_or_none.return_value = client_id
-            else:
-                result.scalar_one_or_none.return_value = cert_id
-            return result
-
-        db_session.execute = mock_execute
+        db_session.execute = AsyncMock(side_effect=[
+            AsyncMock(scalar_one_or_none=MagicMock(return_value=client_id)),
+            AsyncMock(scalar_one_or_none=MagicMock(return_value=cert_id)),
+        ])
 
         result = await save_client_cert(
             db=db_session,
