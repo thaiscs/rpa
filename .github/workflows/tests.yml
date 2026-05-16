@@ -50,7 +50,7 @@ jobs:
     - name: Create test secrets
       env:
         SECRETS_DIR: ${{ github.workspace }}/secrets
-      run: python scripts/init-secrets.py
+      run: python scripts/init_secrets.py
 
     - name: Run tests
       env:
