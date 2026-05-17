@@ -104,6 +104,20 @@ alembic history --verbose
 
 ## Testing
 
+### With Docker (recommended)
+
+The `test-runner` service uses the `test` profile so it doesn't start with the normal stack:
+
+```bash
+# Run all tests
+docker compose --profile test run test-runner pytest
+
+# With coverage report
+docker compose --profile test run test-runner pytest --cov=. --cov-report=html
+```
+
+### Locally
+
 ```bash
 pip install -r requirements-test.txt
 
