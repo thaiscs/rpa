@@ -1,6 +1,6 @@
-from helpers.auth import protected
-from components.shell import page_shell
 from components.cert_form import cert_form
+from components.shell import page_shell
+from helpers.auth import protected
 
 
 @protected("/cadastrar-certificado")

@@ -1,4 +1,5 @@
 from nicegui import ui
+
 from helpers.auth import Auth
 from theme import Color
 

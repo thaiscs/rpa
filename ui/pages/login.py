@@ -1,38 +1,38 @@
-from nicegui import ui
 import httpx
-from helpers.parsing import parse_err
-from components.err_toast import toast_err
+from nicegui import ui
+
 from components.err_dialog import show_error_dialog
+from components.err_toast import toast_err
 from helpers.auth import Auth
-from theme import primary_button, auth_card_wrapper, auth_card
+from helpers.parsing import parse_err
+from theme import auth_card, auth_card_wrapper, primary_button
 
 LOGIN_URL = "http://api:8080/auth/jwt/login"
 
 
 @ui.page("/login")
 def login_page():
-    with auth_card_wrapper():
-        with auth_card():
-            ui.label("Entrar").classes("text-h4 q-mb-md text-center")
+    with auth_card_wrapper(), auth_card():
+        ui.label("Entrar").classes("text-h4 q-mb-md text-center")
 
-            email = (
-                ui.input("Email")
-                .props("type=email filled autocomplete=email")
-                .classes("w-full q-mb-md")
-            )
+        email = (
+            ui.input("Email")
+            .props("type=email filled autocomplete=email")
+            .classes("w-full q-mb-md")
+        )
 
-            password = (
-                ui.input("Senha", password_toggle_button=True)
-                .props("type=password filled autocomplete=current-password")
-                .classes("w-full q-mb-md")
-            )
+        password = (
+            ui.input("Senha", password_toggle_button=True)
+            .props("type=password filled autocomplete=current-password")
+            .classes("w-full q-mb-md")
+        )
 
-            login_btn = primary_button("Entrar", full_width=True)
-            login_btn.on("click", lambda: handle_login(login_btn, email, password))
-            password.on("keydown.enter", lambda: handle_login(login_btn, email, password))
+        login_btn = primary_button("Entrar", full_width=True)
+        login_btn.on("click", lambda: handle_login(login_btn, email, password))
+        password.on("keydown.enter", lambda: handle_login(login_btn, email, password))
 
-            ui.link("Esqueceu a senha?", "/forgot-password").classes("mt-4")
-            ui.link("Criar conta", "/signup").classes("mt-1")
+        ui.link("Esqueceu a senha?", "/forgot-password").classes("mt-4")
+        ui.link("Criar conta", "/signup").classes("mt-1")
 
 
 async def handle_login(btn, email, password):

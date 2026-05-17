@@ -1,4 +1,5 @@
 from nicegui import ui
+
 from components.shell import page_shell
 from helpers.auth import protected
 from theme import Color

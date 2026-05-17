@@ -1,5 +1,6 @@
 from nicegui import ui
 
+
 def toast_err(message: str, duration: int = 3000):
     ui.notify(
         message,

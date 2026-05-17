@@ -1,4 +1,5 @@
 from nicegui import ui
+
 from helpers.parsing import parse_err
 from theme import Color
 

@@ -1,8 +1,9 @@
-from nicegui import ui, events
 import httpx
-from helpers.validation import validate_tax_id
-from components.err_toast import toast_err
+from nicegui import events, ui
+
 from components.err_dialog import show_error_dialog
+from components.err_toast import toast_err
+from helpers.validation import validate_tax_id
 from theme import Color
 
 API_URL = "http://api:8080/upload-cert"

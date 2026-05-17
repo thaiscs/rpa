@@ -1,30 +1,30 @@
-from nicegui import ui
 import httpx
-from helpers.parsing import parse_err
-from components.err_toast import toast_err
+from nicegui import ui
+
 from components.err_dialog import show_error_dialog
-from theme import primary_button, auth_card_wrapper, auth_card
+from components.err_toast import toast_err
+from helpers.parsing import parse_err
+from theme import auth_card, auth_card_wrapper, primary_button
 
 API_URL = "http://api:8080/auth/reset-password"
 
 
 @ui.page("/reset-password")
 def reset_password(token: str):
-    with auth_card_wrapper():
-        with auth_card():
-            ui.label("Alterar senha").classes("text-h4 q-mb-md text-center")
+    with auth_card_wrapper(), auth_card():
+        ui.label("Alterar senha").classes("text-h4 q-mb-md text-center")
 
-            new_password = ui.input("Nova senha", password_toggle_button=True) \
+        new_password = ui.input("Nova senha", password_toggle_button=True) \
                 .props("type=password filled autocomplete=new-password") \
                 .classes("w-full q-mb-md")
 
-            confirm = ui.input("Confirmar nova senha", password_toggle_button=True) \
+        confirm = ui.input("Confirmar nova senha", password_toggle_button=True) \
                 .props("type=password filled autocomplete=new-password") \
                 .classes("w-full q-mb-md")
 
-            submit_btn = primary_button("Alterar", full_width=True)
-            submit_btn.on("click", lambda: submit_reset(submit_btn, new_password, confirm, token))
-            confirm.on("keydown.enter", lambda: submit_reset(submit_btn, new_password, confirm, token))
+        submit_btn = primary_button("Alterar", full_width=True)
+        submit_btn.on("click", lambda: submit_reset(submit_btn, new_password, confirm, token))
+        confirm.on("keydown.enter", lambda: submit_reset(submit_btn, new_password, confirm, token))
 
 
 async def submit_reset(btn, new_password, confirm, token):

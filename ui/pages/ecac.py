@@ -1,7 +1,8 @@
 from nicegui import ui
+
+from components.err_toast import toast_err
 from components.shell import page_shell
 from helpers.auth import protected
-from components.err_toast import toast_err
 from theme import primary_button
 
 

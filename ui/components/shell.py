@@ -1,4 +1,5 @@
 from nicegui import ui
+
 from components.sidebar import sidebar_contents
 from theme import Color
 
