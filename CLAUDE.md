@@ -119,14 +119,28 @@ pytest -v
 
 ## Test Structure
 
-Tests are organized by module in `tests/` directory:
-- `tests/shared/`: Tests for shared utilities (crypto, utils, crud, db, models)
-- `tests/api/`: Tests for API module (auth, admin routes, main app)
-- `tests/ui/`: Tests for UI helpers (auth, validation, secret)
-- `tests/scripts/`: Tests for scripts (init-secrets)
-- `tests/conftest.py`: Shared fixtures for all tests
+167 tests across 20 files. See `tests/README.md` for full documentation.
 
-Tests use pytest with async support, mocking for external services, and separate test database. Worker module tests are excluded.
+```
+tests/
+├── conftest.py          # Shared fixtures
+├── api/                 # Endpoint, auth, and schema tests
+├── shared/              # Crypto, CRUD, DB, model, trigger, and util tests
+├── ui/                  # Auth helper, form logic, parsing, validation tests
+├── worker/              # run_rpa and process_job tests
+└── scripts/             # init_secrets tests
+```
+
+Tests require `SECRETS_DIR` to point at a directory with `fernet.key` and `auth.key`:
+
+```bash
+SECRETS_DIR=/tmp/test-secrets pytest
+```
+
+Three test types are used:
+- **Unit** — all I/O mocked, tests a single function in isolation
+- **Integration (light)** — real FastAPI `TestClient` with auth/DB overridden via `app.dependency_overrides`
+- **Behaviour** — decorator/class logic tested by injecting controlled state without a running framework
 
 ## Workflow Orchestration
 

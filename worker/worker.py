@@ -6,7 +6,8 @@ import subprocess
 import logging
 import aio_pika
 
-from shared.db import fetch_client_cert
+from shared.db import AsyncSessionLocal
+from shared.crud import fetch_client_cert
 
 # --------------------------------------------------
 # Logging
@@ -18,7 +19,7 @@ logging.basicConfig(
 logger = logging.getLogger("RPA worker")
 
 # --------------------------------------------------
-# Execução RPA usando PEM temporários (sync)
+# RPA execution using temporary PEM files (sync)
 # --------------------------------------------------
 def run_rpa(job, cert_bytes, key_bytes):
     logger.info(f"Starting RPA for job: {job}")
@@ -55,22 +56,18 @@ def run_rpa(job, cert_bytes, key_bytes):
         logger.info("Temporary certificates securely destroyed.")
 
 # --------------------------------------------------
-# Process job (sync)
+# Process job (async — owns its own DB session)
 # --------------------------------------------------
-def process_job(job):
+async def process_job(job):
     client_id = job.get("client_id")
     if not client_id:
         raise RuntimeError("Job missing client_id")
 
-    cert_bytes, key_bytes = fetch_client_cert(client_id)
-    run_rpa(job, cert_bytes, key_bytes)
+    async with AsyncSessionLocal() as db:
+        cert_bytes, key_bytes = await fetch_client_cert(db, client_id)
 
-# --------------------------------------------------
-# Async wrapper so sync tasks don't block event loop
-# --------------------------------------------------
-async def process_job_async(job):
     loop = asyncio.get_event_loop()
-    await loop.run_in_executor(None, process_job, job)
+    await loop.run_in_executor(None, run_rpa, job, cert_bytes, key_bytes)
 
 # --------------------------------------------------
 # Main worker loop
@@ -92,7 +89,7 @@ async def worker():
             async with message.process(ignore_processed=True):
                 try:
                     job = json.loads(message.body)
-                    await process_job_async(job)
+                    await process_job(job)
 
                 except json.JSONDecodeError:
                     logger.error("Invalid JSON received → rejecting permanently.")

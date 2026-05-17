@@ -142,7 +142,7 @@ class TestFetchClientCert:
         db_session.execute = AsyncMock(return_value=mock_result)
 
         # Mock decrypt
-        mock_decrypt.side_effect = lambda nonce, ciphertext: b"decrypted_data"
+        mock_decrypt.side_effect = lambda ciphertext: b"decrypted_data"
 
         cert_bytes, key_bytes = await fetch_client_cert(db_session, str(client_id))
 

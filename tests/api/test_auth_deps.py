@@ -1,33 +1,89 @@
 import pytest
 import uuid
-from unittest.mock import patch, MagicMock
-from fastapi import Depends
+from unittest.mock import MagicMock
+from fastapi import HTTPException
+from fastapi.testclient import TestClient
 
 from api.auth.deps import current_admin, current_superuser
 from api.auth.users import fastapi_users
 
 
 class TestCurrentAdmin:
-    """Tests for current_admin dependency."""
-
-    def test_current_admin_is_fastapi_users_dependency(self):
-        """Test that current_admin is a FastAPI Users dependency."""
+    def test_is_not_none(self):
         assert current_admin is not None
-        # It should be a callable that returns a user
+
+    def test_is_callable(self):
         assert callable(current_admin)
 
 
 class TestCurrentSuperuser:
-    """Tests for current_superuser dependency."""
-
-    def test_current_superuser_is_fastapi_users_dependency(self):
-        """Test that current_superuser is a FastAPI Users dependency."""
+    def test_is_not_none(self):
         assert current_superuser is not None
-        # It should be a callable that returns a superuser
+
+    def test_is_callable(self):
         assert callable(current_superuser)
 
-    def test_current_superuser_requires_superuser(self):
-        """Test that current_superuser requires superuser=True."""
-        # This is verified by the fastapi_users.current_user(superuser=True) call
-        # We can't easily test the behavior without a full FastAPI app
-        assert current_superuser is not None
+
+class TestAuthEnforcement:
+    """HTTP-level tests verifying auth guards actually block requests."""
+
+    @pytest.fixture
+    def client(self):
+        from api.main import app
+        return TestClient(app, raise_server_exceptions=False)
+
+    @pytest.fixture
+    def upload_cert_path(self):
+        from api.main import app
+        return next(
+            (r.path for r in app.routes if hasattr(r, "path") and "upload-cert" in r.path),
+            None,
+        )
+
+    @pytest.fixture
+    def send_job_path(self):
+        from api.main import app
+        return next(
+            (r.path for r in app.routes if hasattr(r, "path") and "send-job" in r.path),
+            None,
+        )
+
+    def test_upload_cert_without_token_returns_401(self, client, upload_cert_path):
+        import io
+        response = client.post(
+            upload_cert_path,
+            data={
+                "razao_social": "Empresa",
+                "CNPJ_CPF": "12345678000190",
+                "cert_name": "cert",
+                "cert_password": "pass",
+            },
+            files={"cert_file": ("t.pfx", io.BytesIO(b"d"), "application/x-pkcs12")},
+        )
+        assert response.status_code == 401
+
+    def test_send_job_without_token_returns_401(self, client, send_job_path):
+        response = client.post(
+            send_job_path,
+            json={"job_type": "ecac", "data": {}},
+        )
+        assert response.status_code == 401
+
+    def test_send_job_non_superuser_returns_403(self, send_job_path):
+        from api.main import app
+        mock_user = MagicMock()
+        mock_user.id = uuid.uuid4()
+        mock_user.is_superuser = False
+
+        def raise_forbidden():
+            raise HTTPException(status_code=403, detail="Forbidden")
+
+        app.dependency_overrides[current_admin] = lambda: mock_user
+        app.dependency_overrides[current_superuser] = raise_forbidden
+        c = TestClient(app, raise_server_exceptions=False)
+
+        try:
+            response = c.post(send_job_path, json={"job_type": "ecac", "data": {}})
+            assert response.status_code == 403
+        finally:
+            app.dependency_overrides.clear()
