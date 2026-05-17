@@ -11,3 +11,16 @@
 .q-field {
     font-size: 16px !important;
 }
+
+/* A11y: visible focus rings */
+.q-btn:focus-visible,
+.q-field__control:focus-within {
+    outline: 2px solid #CEB690;
+    outline-offset: 2px;
+}
+
+[data-nav-link]:focus-visible {
+    outline: 2px solid #CEB690;
+    outline-offset: 2px;
+    border-radius: 6px;
+}

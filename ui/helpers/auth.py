@@ -1,6 +1,10 @@
-from nicegui import app, ui
+import logging
 import time
+
 import httpx
+from nicegui import app, ui
+
+log = logging.getLogger(__name__)
 
 USER_URL = "http://api:8080/auth/users/me"
 SESSION_LIFETIME_SECONDS = 8 * 60 * 60
@@ -34,7 +38,7 @@ class Auth:
                     app.storage.user["user"] = r.json()
                     return r.json()
             except Exception as e:
-                print(f"Error fetching user: {e}")
+                log.warning("fetch_user failed: %s", e)
         return None
 
     @staticmethod
