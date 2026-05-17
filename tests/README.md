@@ -31,6 +31,23 @@ SECRETS_DIR=/tmp/test-secrets pytest -k "upload_cert"          # tests matching 
 SECRETS_DIR=/tmp/test-secrets pytest -m "not slow"             # exclude slow tests
 ```
 
+### Coverage report
+
+Running `pytest` (without `--no-cov`) generates an HTML report in `htmlcov/`:
+
+```bash
+# Generate and open in one step
+SECRETS_DIR=/tmp/test-secrets pytest && open htmlcov/index.html        # macOS
+SECRETS_DIR=/tmp/test-secrets pytest && xdg-open htmlcov/index.html   # Linux
+SECRETS_DIR=/tmp/test-secrets pytest && start htmlcov/index.html       # Windows
+
+# Or serve it locally if your browser can't open file:// paths directly
+python -m http.server 8080 --directory htmlcov
+# then visit http://localhost:8080
+```
+
+The terminal output already shows a `--cov-report=term-missing` summary after each run — the `Missing` column lists the exact line numbers not covered, so you usually don't need to open the HTML unless you want to click through the source.
+
 ### Why SECRETS_DIR is required
 
 `shared/shared/crypto.py` and `api/auth/config.py` load real key files at **import time** (module-level globals). There is no lazy loading, so the keys must exist before any test module is collected. In CI, the GitHub Actions workflow creates them as part of the setup step.
