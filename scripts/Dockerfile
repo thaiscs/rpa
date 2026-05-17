@@ -6,4 +6,4 @@ RUN pip install cryptography
 
 COPY scripts /scripts
 
-CMD ["python", "/scripts/init-secrets.py"]
+CMD ["python", "/scripts/init_secrets.py"]

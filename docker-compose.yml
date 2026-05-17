@@ -22,6 +22,7 @@ services:
       POSTGRES_PASSWORD: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-test-db.sh:/docker-entrypoint-initdb.d/init-test-db.sh
     # command: >
     #   postgres
     #   -c log_statement=none
@@ -104,7 +105,7 @@ services:
       - api
 
   # worker:
-  #   build: 
+  #   build:
   #     context: .
   #     dockerfile: worker/Dockerfile
   #   # volumes são montados para facilitar o desenvolvimento, mas em produção o código deve ser copiado para a imagem
@@ -119,6 +120,26 @@ services:
   #   depends_on:
   #     - rabbitmq
   #     - postgres
+
+  test-runner:
+    build:
+      context: .
+      dockerfile: tests/Dockerfile
+    volumes:
+      - ./tests:/app/tests
+      - ./shared/shared:/app/shared
+      - ./api:/app/api
+      - ./ui:/app/ui
+    environment:
+      POSTGRES_DB: certsdb_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles:
+      - test
 
 # persistent thru restart
 volumes:

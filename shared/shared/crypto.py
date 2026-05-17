@@ -24,7 +24,8 @@ log = logging.getLogger(__name__)
 # -----------------------------
 def load_fernet_key() -> bytes:
     # key_file = Path("/run/secrets/fernet.key") # Docker Swarm secrets path
-    key_file = Path("/secrets/fernet.key")
+    secrets_dir = Path(os.getenv("SECRETS_DIR", "/secrets"))
+    key_file = secrets_dir / "fernet.key"
 
     if not key_file.exists():
         raise RuntimeError("Encryption key not found in Docker secret volume")
