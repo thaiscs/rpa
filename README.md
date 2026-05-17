@@ -18,9 +18,9 @@ rpa/
 | Service | Stack | Port |
 |---------|-------|------|
 | `api` | FastAPI + fastapi-users + SQLAlchemy | 8080 |
-| `ui` | NiceGUI | 8081 |
+| `ui` | NiceGUI | 3000 |
 | `postgres` | PostgreSQL 16 | 5432 |
-| `rabbitmq` | RabbitMQ | 5672 |
+| `rabbitmq` | RabbitMQ | 5672 / 15672 (management UI) |
 
 Certificate data (PFX, password, key, cert) is encrypted at rest using Fernet symmetric encryption before being stored in PostgreSQL.
 
@@ -30,7 +30,7 @@ Certificate data (PFX, password, key, cert) is encrypted at rest using Fernet sy
 docker compose up --build
 ```
 
-The API will be at `http://localhost:8080` and the admin panel at `http://localhost:8081`.
+The API will be at `http://localhost:8080` and the admin panel at `http://localhost:3000`.
 
 ### Stop and clean up
 
@@ -54,17 +54,28 @@ cd ui && python main.py
 ### Useful Docker commands
 
 ```bash
-docker compose logs -f api
-docker compose logs -f ui
-docker compose ps -a
-docker compose build --no-cache api
+docker compose down --remove-orphans
+docker compose down -v
+docker volume rm rpa_secrets-store
+docker compose stop postgres
+docker compose rm -f postgres
+docker system prune -f
+docker compose build --no-cache web
+docker compose up --build --force-recreate
 docker compose up --force-recreate
+docker compose ps -a
+docker compose images
+docker compose logs -f api
+docker compose run migrations sh
 ```
 
 ### Database access
 
 ```bash
 docker exec -it rpa-postgres-1 psql -U postgres -d certsdb
+
+sudo lsof -i :5432
+sudo systemctl stop postgresql
 ```
 
 ```sql
@@ -72,6 +83,7 @@ SELECT * FROM clients;
 SELECT * FROM certificates LIMIT 1;
 \dt          -- list tables
 \d+ clients  -- describe table
+SELECT tablename FROM pg_tables WHERE schemaname = 'public';
 ```
 
 ### Migrations
