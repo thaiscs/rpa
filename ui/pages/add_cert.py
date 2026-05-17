@@ -1,4 +1,3 @@
-from nicegui import ui
 from helpers.auth import protected
 from components.shell import page_shell
 from components.cert_form import cert_form

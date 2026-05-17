@@ -1,7 +1,7 @@
 from nicegui import ui
 import httpx
 from components.err_toast import toast_err
-from theme import Color, primary_button, auth_card_wrapper, auth_card
+from theme import primary_button, auth_card_wrapper, auth_card
 
 FORGOT_URL = "http://api:8080/auth/forgot-password"
 

@@ -3,7 +3,7 @@ import httpx
 from helpers.parsing import parse_err
 from components.err_dialog import show_error_dialog
 from components.err_toast import toast_err
-from theme import Color, primary_button, auth_card_wrapper, auth_card
+from theme import primary_button, auth_card_wrapper, auth_card
 
 SIGNUP_URL = "http://api:8080/auth/register"
 

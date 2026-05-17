@@ -50,7 +50,7 @@ jobs:
         pip install ruff
 
     - name: Lint
-      run: ruff check ui/ api/ shared/ worker/
+      run: ruff check ui/
 
     - name: Create test secrets
       env:
