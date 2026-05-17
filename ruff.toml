@@ -7,3 +7,6 @@ ignore = ["E501"]
 
 [lint.per-file-ignores]
 "alembic/versions/*" = ["E", "F"]
+
+[lint.isort]
+known-first-party = ["helpers", "components", "theme", "pages", "shared"]
