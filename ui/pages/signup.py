@@ -4,7 +4,7 @@ from helpers.parsing import parse_err
 from components.err_dialog import show_error_dialog
 from components.err_toast import toast_err
 
-SIGNUP_URL = "http://api:8080/auth/register"   # FastAPI Users register endpoint
+SIGNUP_URL = "http://api:8080/auth/register"
 
 
 @ui.page("/signup")
@@ -13,35 +13,55 @@ def signup_page():
         "flex justify-center items-center min-h-screen w-full bg-[#091E2F]"
     ):
         with ui.element("q-card").classes(
-            "q-pa-xl shadow-3 rounded-borders bg-white flex flex-col items-center "
-            "w-full max-w-md"
+            "q-pa-md sm:q-pa-xl shadow-3 rounded-borders bg-white flex flex-col "
+            "items-center w-full max-w-md mx-4"
         ):
-            ui.label("Sign Up").classes("text-h4 q-mb-md text-center")
+            ui.label("Criar conta").classes("text-h4 q-mb-md text-center")
 
-            email = ui.input("Email").props("type=email filled").classes("w-full q-mb-md")
-            password = (
-                ui.input("Senha", password_toggle_button=True)
-                .props("type=password filled")
+            email = ui.input("Email") \
+                .props("type=email filled autocomplete=email") \
                 .classes("w-full q-mb-md")
-            )
-            confirm = (
-                ui.input("Confirmar Senha", password_toggle_button=True)
-                .props("type=password filled")
-                .classes("w-full q-mb-md")
-            )
 
-            ui.button(
-                "Criar Conta",
-                on_click=lambda: handle_signup(email, password, confirm)
-            ).props("flat").classes(
+            password = ui.input("Senha", password_toggle_button=True) \
+                .props("type=password filled autocomplete=new-password") \
+                .classes("w-full q-mb-sm")
+
+            @ui.refreshable
+            def password_rules():
+                v = password.value or ""
+                rules = [
+                    ("Pelo menos 8 caracteres", len(v) >= 8),
+                    ("Contém um número", any(c.isdigit() for c in v)),
+                    ("Contém uma letra", any(c.isalpha() for c in v)),
+                ]
+                with ui.column().classes("gap-1 mt-1 mb-2 text-sm"):
+                    for label, ok in rules:
+                        color = "text-green-600" if ok else "text-gray-500"
+                        icon = "check-circle-fill" if ok else "circle"
+                        ui.html(
+                            f'<span class="{color}">'
+                            f'<i class="bi bi-{icon}" aria-hidden="true"></i> {label}'
+                            f'</span>'
+                        )
+
+            password.on("update:model-value", password_rules.refresh)
+            password_rules()
+
+            confirm = ui.input("Confirmar Senha", password_toggle_button=True) \
+                .props("type=password filled autocomplete=new-password") \
+                .classes("w-full q-mb-md")
+
+            signup_btn = ui.button("Criar Conta").props("flat").classes(
                 "bg-[#CEB690] text-white hover:bg-[#93713C] "
                 "transition-all q-pa-md rounded w-full"
             )
+            signup_btn.on("click", lambda: handle_signup(signup_btn, email, password, confirm))
+            confirm.on("keydown.enter", lambda: handle_signup(signup_btn, email, password, confirm))
 
             ui.link("Já tem conta? Faça login", "/login").classes("mt-4")
 
 
-async def handle_signup(email, password, confirm):
+async def handle_signup(btn, email, password, confirm):
     if not email.value or not password.value or not confirm.value:
         toast_err("Todos os campos são obrigatórios")
         return
@@ -50,20 +70,19 @@ async def handle_signup(email, password, confirm):
         toast_err("Senhas não coincidem")
         return
 
-    payload = {
-        "email": email.value,
-        "password": password.value,
-    }
+    btn.props("loading disable")
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(SIGNUP_URL, json={
+                "email": email.value,
+                "password": password.value,
+            })
 
-    async with httpx.AsyncClient() as client:
-        response = await client.post(SIGNUP_URL, json=payload)
-
-    print("SIGNUP RESP:", response.json(), response.status_code)
-
-    if response.status_code == 201:
-        ui.notify("Conta criada com sucesso!", color="green")
-        ui.timer(0.5, lambda: ui.navigate.to("/cadastrar-certificado"))
-
-    else:
-        message = parse_err(response.json().get("detail"))
-        show_error_dialog(message)
+        if response.status_code == 201:
+            ui.notify("Conta criada com sucesso!", color="green")
+            ui.timer(0.5, lambda: ui.navigate.to("/cadastrar-certificado"))
+        else:
+            message = parse_err(response.json().get("detail"))
+            show_error_dialog(message)
+    finally:
+        btn.props(remove="loading disable")

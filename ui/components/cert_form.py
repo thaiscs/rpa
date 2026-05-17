@@ -7,7 +7,7 @@ from components.err_dialog import show_error_dialog
 API_URL = "http://api:8080/upload-cert"
 
 
-async def submit_form(state, legal_name, tax_id, cert_name, cert_password):
+async def submit_form(state, legal_name, tax_id, cert_name, cert_password, btn=None):
     if not legal_name.value or not tax_id.value or not cert_name.value or not cert_password.value:
         toast_err("Todos os campos são obrigatórios")
         return
@@ -20,42 +20,48 @@ async def submit_form(state, legal_name, tax_id, cert_name, cert_password):
         toast_err("CNPJ/CPF inválido. Deve conter 11 ou 14 dígitos.")
         return
 
-    uploaded = state["file"]
-    form_data = {
-        "razao_social": legal_name.value,
-        "CNPJ_CPF": tax_id.value,
-        "cert_name": cert_name.value,
-        "cert_password": cert_password.value,
-    }
-    file = {
-        "cert_file": (
-            uploaded.name,
-            await uploaded.read(),
-            uploaded.content_type or "application/x-pkcs12",
-        )
-    }
+    if btn:
+        btn.props("loading disable")
+    try:
+        uploaded = state["file"]
+        form_data = {
+            "razao_social": legal_name.value,
+            "CNPJ_CPF": tax_id.value,
+            "cert_name": cert_name.value,
+            "cert_password": cert_password.value,
+        }
+        file = {
+            "cert_file": (
+                uploaded.name,
+                await uploaded.read(),
+                uploaded.content_type or "application/x-pkcs12",
+            )
+        }
 
-    async with httpx.AsyncClient() as client:
-        response = await client.post(API_URL, data=form_data, files=file)
+        async with httpx.AsyncClient() as client:
+            response = await client.post(API_URL, data=form_data, files=file)
 
-    if response.status_code == 200:
-        with ui.dialog() as dialog, ui.card().classes("items-center p-6"):
-            ui.button(icon="close", on_click=dialog.close) \
-                .props("flat round color=gray") \
-                .classes("self-end")
-            ui.html('<i class="bi bi-check-circle-fill text-6xl text-positive" aria-hidden="true"></i>')
-            ui.label(response.json().get("message", "Sucesso!")).classes("text-h6")
-        dialog.open()
-        state["file"] = None
-    else:
-        if response.status_code == 500:
-            message = "Erro interno do servidor"
+        if response.status_code == 200:
+            with ui.dialog() as dialog, ui.card().classes("items-center p-6"):
+                ui.button(icon="close", on_click=dialog.close) \
+                    .props("flat round color=gray") \
+                    .classes("self-end")
+                ui.html('<i class="bi bi-check-circle-fill text-6xl text-positive" aria-hidden="true"></i>')
+                ui.label(response.json().get("message", "Sucesso!")).classes("text-h6")
+            dialog.open()
+            state["file"] = None
         else:
-            try:
-                message = response.json().get("detail", "Erro desconhecido")
-            except Exception:
-                message = "Erro desconhecido"
-        show_error_dialog(message)
+            if response.status_code == 500:
+                message = "Erro interno do servidor"
+            else:
+                try:
+                    message = response.json().get("detail", "Erro desconhecido")
+                except Exception:
+                    message = "Erro desconhecido"
+            show_error_dialog(message, title="Não foi possível enviar o certificado")
+    finally:
+        if btn:
+            btn.props(remove="loading disable")
 
 
 def cert_form():
@@ -96,7 +102,7 @@ def cert_form():
             "Senha do certificado *",
             password_toggle_button=True,
             validation={"Obrigatório": lambda v: bool(v and v.strip())},
-        ).props("type=password filled required lazy-rules").classes("w-full mb-3")
+        ).props("type=password filled required lazy-rules autocomplete=off").classes("w-full mb-3")
 
         ui.upload(
             label="Arquivo do certificado .pfx",
@@ -115,9 +121,14 @@ def cert_form():
 
         file_chip()
 
-        ui.button(
-            "Enviar",
-            on_click=lambda: submit_form(state, legal_name, tax_id, cert_name, cert_password),
-        ).props("flat").classes(
+        send_btn = ui.button("Enviar").props("flat").classes(
             "bg-[#091E2F] text-white hover:bg-[#93713C] transition-all float-right q-pa-md rounded"
+        )
+        send_btn.on(
+            "click",
+            lambda: submit_form(state, legal_name, tax_id, cert_name, cert_password, send_btn),
+        )
+        cert_password.on(
+            "keydown.enter",
+            lambda: submit_form(state, legal_name, tax_id, cert_name, cert_password, send_btn),
         )

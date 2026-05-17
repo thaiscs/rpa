@@ -2,37 +2,55 @@ from nicegui import ui
 import httpx
 from helpers.parsing import parse_err
 from components.err_toast import toast_err
+from components.err_dialog import show_error_dialog
 
 API_URL = "http://api:8080/auth/reset-password"
 
 
 @ui.page("/reset-password")
 def reset_password(token: str):
-    with ui.column().classes("items-center w-full max-w-md mx-auto mt-20"):
-        ui.label("Alterar Senha").classes("text-h4 mb-4")
+    with ui.element("div").classes(
+        "flex justify-center items-center min-h-screen w-full bg-[#091E2F]"
+    ):
+        with ui.element("q-card").classes(
+            "q-pa-md sm:q-pa-xl shadow-3 rounded-borders bg-white flex flex-col "
+            "items-center w-full max-w-md mx-4"
+        ):
+            ui.label("Alterar senha").classes("text-h4 q-mb-md text-center")
 
-        new_password = ui.input("Nova Senha", password_toggle_button=True) \
-            .props("type=password filled").classes("w-full")
+            new_password = ui.input("Nova senha", password_toggle_button=True) \
+                .props("type=password filled autocomplete=new-password") \
+                .classes("w-full q-mb-md")
 
-        ui.button(
-            "Alterar",
-            on_click=lambda: submit_reset(new_password, token)
-        ).classes("bg-[#CEB690] text-white w-full q-mt-md")
+            confirm = ui.input("Confirmar nova senha", password_toggle_button=True) \
+                .props("type=password filled autocomplete=new-password") \
+                .classes("w-full q-mb-md")
+
+            submit_btn = ui.button("Alterar").props("flat").classes(
+                "bg-[#CEB690] text-white hover:bg-[#93713C] q-pa-md rounded w-full"
+            )
+            submit_btn.on("click", lambda: submit_reset(submit_btn, new_password, confirm, token))
+            confirm.on("keydown.enter", lambda: submit_reset(submit_btn, new_password, confirm, token))
 
 
-async def submit_reset(new_password, token):
+async def submit_reset(btn, new_password, confirm, token):
     if not new_password.value:
         toast_err("Senha é obrigatória")
         return
+    if new_password.value != confirm.value:
+        toast_err("Senhas não coincidem")
+        return
 
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            API_URL,
-            json={"token": token, "password": new_password.value}
-        )
-
-    if response.status_code == 200:
-        ui.notify("Senha alterada!", color="green")
-        ui.navigate.to("/login")
-    else:
-        ui.notify(parse_err(response.json()), color="negative")
+    btn.props("loading disable")
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                API_URL, json={"token": token, "password": new_password.value}
+            )
+        if response.status_code == 200:
+            ui.notify("Senha alterada", color="green")
+            ui.navigate.to("/login")
+        else:
+            show_error_dialog(parse_err(response.json()))
+    finally:
+        btn.props(remove="loading disable")
