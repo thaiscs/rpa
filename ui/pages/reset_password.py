@@ -5,6 +5,7 @@ from components.err_toast import toast_err
 
 API_URL = "http://api:8080/auth/reset-password"
 
+
 @ui.page("/reset-password")
 def reset_password(token: str):
     with ui.column().classes("items-center w-full max-w-md mx-auto mt-20"):
@@ -17,6 +18,7 @@ def reset_password(token: str):
             "Alterar",
             on_click=lambda: submit_reset(new_password, token)
         ).classes("bg-[#CEB690] text-white w-full q-mt-md")
+
 
 async def submit_reset(new_password, token):
     if not new_password.value:
@@ -31,6 +33,6 @@ async def submit_reset(new_password, token):
 
     if response.status_code == 200:
         ui.notify("Senha alterada!", color="green")
-        ui.open("/login")
+        ui.navigate.to("/login")
     else:
         ui.notify(parse_err(response.json()), color="negative")

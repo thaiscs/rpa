@@ -3,14 +3,10 @@ from unittest.mock import MagicMock, AsyncMock, patch
 import pytest
 
 # Install stub modules for UI-service internal imports before cert_form is imported.
-# cert_form.py uses bare `from helpers.x import y` and `from components.x import y`
-# which only resolve when the `ui/` directory is on sys.path (as in the running service).
-# Stubbing them here lets us import and test the module's logic in isolation.
 for _mod in ["helpers", "helpers.validation", "components", "components.err_toast", "components.err_dialog"]:
     sys.modules.setdefault(_mod, MagicMock())
 
-import ui.components.cert_form as cert_form_module
-from ui.components.cert_form import handle_upload, submit_form
+from ui.components.cert_form import submit_form
 
 
 def _field(value):
@@ -20,115 +16,73 @@ def _field(value):
     return f
 
 
-class TestHandleUpload:
-    def setup_method(self):
-        cert_form_module.uploaded_file = None
-
-    def test_sets_global_uploaded_file(self):
-        mock_file = MagicMock()
-        mock_file.name = "test.pfx"
-        event = MagicMock()
-        event.file = mock_file
-
-        with patch("ui.components.cert_form.ui"):
-            handle_upload(event)
-
-        assert cert_form_module.uploaded_file is mock_file
-
-    def test_notifies_with_filename(self):
-        mock_file = MagicMock()
-        mock_file.name = "empresa.pfx"
-        event = MagicMock()
-        event.file = mock_file
-
-        with patch("ui.components.cert_form.ui") as mock_ui:
-            handle_upload(event)
-
-        notify_msg = mock_ui.notify.call_args[0][0]
-        assert "empresa.pfx" in notify_msg
-
-    def test_notification_is_positive(self):
-        mock_file = MagicMock()
-        mock_file.name = "cert.pfx"
-        event = MagicMock()
-        event.file = mock_file
-
-        with patch("ui.components.cert_form.ui") as mock_ui:
-            handle_upload(event)
-
-        assert mock_ui.notify.call_args[1].get("color") == "positive"
-
-
 class TestSubmitFormValidation:
-    def setup_method(self):
-        cert_form_module.uploaded_file = None
-
     async def test_empty_legal_name_shows_required_toast(self):
+        state = {"file": None}
         with patch("ui.components.cert_form.toast_err") as mock_toast:
             await submit_form(
-                _field(""), _field("12345678000190"), _field("cert"), _field("pass"), MagicMock()
+                state, _field(""), _field("12345678000190"), _field("cert"), _field("pass")
             )
         mock_toast.assert_called_once()
         assert "obrigatórios" in mock_toast.call_args[0][0]
 
     async def test_empty_tax_id_shows_required_toast(self):
+        state = {"file": None}
         with patch("ui.components.cert_form.toast_err") as mock_toast:
             await submit_form(
-                _field("Empresa"), _field(""), _field("cert"), _field("pass"), MagicMock()
+                state, _field("Empresa"), _field(""), _field("cert"), _field("pass")
             )
         mock_toast.assert_called_once()
         assert "obrigatórios" in mock_toast.call_args[0][0]
 
     async def test_empty_cert_name_shows_required_toast(self):
+        state = {"file": None}
         with patch("ui.components.cert_form.toast_err") as mock_toast:
             await submit_form(
-                _field("Empresa"), _field("12345678000190"), _field(""), _field("pass"), MagicMock()
+                state, _field("Empresa"), _field("12345678000190"), _field(""), _field("pass")
             )
         mock_toast.assert_called_once()
 
     async def test_empty_password_shows_required_toast(self):
+        state = {"file": None}
         with patch("ui.components.cert_form.toast_err") as mock_toast:
             await submit_form(
-                _field("Empresa"), _field("12345678000190"), _field("cert"), _field(""), MagicMock()
+                state, _field("Empresa"), _field("12345678000190"), _field("cert"), _field("")
             )
         mock_toast.assert_called_once()
 
     async def test_missing_file_shows_pfx_toast(self):
-        # All fields filled, but no file uploaded
-        cert_form_module.uploaded_file = None
+        state = {"file": None}
         with patch("ui.components.cert_form.toast_err") as mock_toast:
             await submit_form(
-                _field("Empresa"), _field("12345678000190"), _field("cert"), _field("pass"), MagicMock()
+                state, _field("Empresa"), _field("12345678000190"), _field("cert"), _field("pass")
             )
         mock_toast.assert_called_with("Envie um arquivo .pfx")
 
     async def test_invalid_tax_id_shows_cnpj_toast(self):
-        cert_form_module.uploaded_file = MagicMock()
+        state = {"file": MagicMock()}
         with patch("ui.components.cert_form.toast_err") as mock_toast, \
              patch("ui.components.cert_form.validate_tax_id", return_value=False):
             await submit_form(
-                _field("Empresa"), _field("123"), _field("cert"), _field("pass"), MagicMock()
+                state, _field("Empresa"), _field("123"), _field("cert"), _field("pass")
             )
         mock_toast.assert_called_once()
         assert "CNPJ" in mock_toast.call_args[0][0]
 
     async def test_validation_does_not_call_api_on_failure(self):
-        cert_form_module.uploaded_file = None
+        state = {"file": None}
         mock_client_cls = MagicMock()
 
         with patch("ui.components.cert_form.toast_err"), \
              patch("ui.components.cert_form.httpx.AsyncClient", mock_client_cls):
             await submit_form(
-                _field(""), _field("12345678000190"), _field("cert"), _field("pass"), MagicMock()
+                state, _field(""), _field("12345678000190"), _field("cert"), _field("pass")
             )
 
         mock_client_cls.assert_not_called()
 
 
 class TestSubmitFormApiCall:
-    def setup_method(self):
-        cert_form_module.uploaded_file = None
-
     def _make_uploaded_file(self, name="cert.pfx", content=b"pfx_bytes"):
         f = AsyncMock()
         f.name = name
@@ -152,14 +106,14 @@ class TestSubmitFormApiCall:
         return cls, inner
 
     async def test_successful_post_sends_all_form_fields(self):
-        cert_form_module.uploaded_file = self._make_uploaded_file()
+        state = {"file": self._make_uploaded_file()}
         mock_cls, mock_inner = self._make_httpx_client()
 
         with patch("ui.components.cert_form.httpx.AsyncClient", mock_cls), \
              patch("ui.components.cert_form.validate_tax_id", return_value=True), \
              patch("ui.components.cert_form.ui"):
             await submit_form(
-                _field("Empresa"), _field("12345678000190"), _field("certificado"), _field("senha"), MagicMock()
+                state, _field("Empresa"), _field("12345678000190"), _field("certificado"), _field("senha")
             )
 
         mock_inner.post.assert_called_once()
@@ -170,33 +124,33 @@ class TestSubmitFormApiCall:
         assert kw["data"]["cert_password"] == "senha"
 
     async def test_successful_response_opens_success_dialog(self):
-        cert_form_module.uploaded_file = self._make_uploaded_file()
+        state = {"file": self._make_uploaded_file()}
         mock_cls, _ = self._make_httpx_client(200, {"message": "Salvo!"})
 
         with patch("ui.components.cert_form.httpx.AsyncClient", mock_cls), \
              patch("ui.components.cert_form.validate_tax_id", return_value=True), \
              patch("ui.components.cert_form.ui") as mock_ui:
             await submit_form(
-                _field("E"), _field("12345678000190"), _field("c"), _field("p"), MagicMock()
+                state, _field("E"), _field("12345678000190"), _field("c"), _field("p")
             )
 
         mock_ui.dialog.assert_called()
 
-    async def test_successful_response_resets_uploaded_file(self):
-        cert_form_module.uploaded_file = self._make_uploaded_file()
+    async def test_successful_response_resets_state_file(self):
+        state = {"file": self._make_uploaded_file()}
         mock_cls, _ = self._make_httpx_client(200)
 
         with patch("ui.components.cert_form.httpx.AsyncClient", mock_cls), \
              patch("ui.components.cert_form.validate_tax_id", return_value=True), \
              patch("ui.components.cert_form.ui"):
             await submit_form(
-                _field("E"), _field("12345678000190"), _field("c"), _field("p"), MagicMock()
+                state, _field("E"), _field("12345678000190"), _field("c"), _field("p")
             )
 
-        assert cert_form_module.uploaded_file is None
+        assert state["file"] is None
 
-    async def test_500_response_shows_server_error(self):
-        cert_form_module.uploaded_file = self._make_uploaded_file()
+    async def test_500_response_calls_show_error_dialog(self):
+        state = {"file": self._make_uploaded_file()}
         mock_cls, _ = self._make_httpx_client(500, {"detail": "Internal error"})
 
         with patch("ui.components.cert_form.httpx.AsyncClient", mock_cls), \
@@ -204,14 +158,13 @@ class TestSubmitFormApiCall:
              patch("ui.components.cert_form.show_error_dialog") as mock_dialog, \
              patch("ui.components.cert_form.ui"):
             await submit_form(
-                _field("E"), _field("12345678000190"), _field("c"), _field("p"), MagicMock()
+                state, _field("E"), _field("12345678000190"), _field("c"), _field("p")
             )
 
-        # 500 branch shows a generic message, not show_error_dialog
-        mock_dialog.assert_not_called()
+        mock_dialog.assert_called_once_with("Erro interno do servidor")
 
     async def test_non_500_error_calls_show_error_dialog(self):
-        cert_form_module.uploaded_file = self._make_uploaded_file()
+        state = {"file": self._make_uploaded_file()}
         mock_cls, _ = self._make_httpx_client(400, {"detail": "Bad cert password"})
 
         with patch("ui.components.cert_form.httpx.AsyncClient", mock_cls), \
@@ -219,7 +172,7 @@ class TestSubmitFormApiCall:
              patch("ui.components.cert_form.show_error_dialog") as mock_dialog, \
              patch("ui.components.cert_form.ui"):
             await submit_form(
-                _field("E"), _field("12345678000190"), _field("c"), _field("p"), MagicMock()
+                state, _field("E"), _field("12345678000190"), _field("c"), _field("p")
             )
 
         mock_dialog.assert_called_once_with("Bad cert password")

@@ -4,27 +4,15 @@ from helpers.validation import validate_tax_id
 from components.err_toast import toast_err
 from components.err_dialog import show_error_dialog
 
-API_URL = "http://api:8080/upload-cert"  # docker compose api service name
-
-uploaded_file = None
-
-def handle_upload(e: events.UploadEventArguments):
-    global uploaded_file
-    uploaded_file = e.file
-    ui.notify(f"Arquivo '{uploaded_file.name}' carregado com sucesso!", color="positive")
+API_URL = "http://api:8080/upload-cert"
 
 
-async def submit_form(legal_name, tax_id, cert_name, cert_password, cert_file):
-    # Validation
-    # TODO: extract form modules
-    print("DEBUG: form values ->", legal_name.value)
-
+async def submit_form(state, legal_name, tax_id, cert_name, cert_password):
     if not legal_name.value or not tax_id.value or not cert_name.value or not cert_password.value:
         toast_err("Todos os campos são obrigatórios")
         return
-    
-    global uploaded_file
-    if not uploaded_file:
+
+    if not state["file"]:
         toast_err("Envie um arquivo .pfx")
         return
 
@@ -32,83 +20,104 @@ async def submit_form(legal_name, tax_id, cert_name, cert_password, cert_file):
         toast_err("CNPJ/CPF inválido. Deve conter 11 ou 14 dígitos.")
         return
 
+    uploaded = state["file"]
     form_data = {
         "razao_social": legal_name.value,
         "CNPJ_CPF": tax_id.value,
         "cert_name": cert_name.value,
         "cert_password": cert_password.value,
     }
-
     file = {
         "cert_file": (
-            uploaded_file.name, 
-            await uploaded_file.read(), 
-            uploaded_file.content_type or "application/x-pkcs12"
+            uploaded.name,
+            await uploaded.read(),
+            uploaded.content_type or "application/x-pkcs12",
         )
     }
 
     async with httpx.AsyncClient() as client:
         response = await client.post(API_URL, data=form_data, files=file)
-    print("RESP: ==>", response.json(), response.status_code)
+
     if response.status_code == 200:
-        # extract to success dialog component/helper
-        with ui.dialog() as dialog:
-          with ui.card().style("align-items: center; padding: 24px;"):
-            ui.button().props("icon=close color=gray flat round").style("align-self: flex-end;").on("click", lambda: dialog.close())
-            ui.label(response.json().get("message", "Sucesso!")).classes("text-h6 q-pb-lg")
-            ui.html(f'<i class="bi bi-check-circle-fill text-6xl text-positive"></i>')
-            dialog.open()
-          uploaded_file = None  # reset
+        with ui.dialog() as dialog, ui.card().classes("items-center p-6"):
+            ui.button(icon="close", on_click=dialog.close) \
+                .props("flat round color=gray") \
+                .classes("self-end")
+            ui.html('<i class="bi bi-check-circle-fill text-6xl text-positive" aria-hidden="true"></i>')
+            ui.label(response.json().get("message", "Sucesso!")).classes("text-h6")
+        dialog.open()
+        state["file"] = None
     else:
         if response.status_code == 500:
             message = "Erro interno do servidor"
         else:
-            message = response.json().get("detail", "Erro desconhecido")
+            try:
+                message = response.json().get("detail", "Erro desconhecido")
+            except Exception:
+                message = "Erro desconhecido"
+        show_error_dialog(message)
 
-            show_error_dialog(message)
 
 def cert_form():
-    with ui.element("q-card").classes("q-pa-xl shadow-3 rounded-borders bg-white w-full display-flex flex-column items-center"):
+    state = {"file": None}
+
+    def handle_upload(e: events.UploadEventArguments):
+        state["file"] = e
+        ui.notify(f"Arquivo '{e.name}' carregado", color="positive")
+
+    def remove_file():
+        state["file"] = None
+        file_chip.refresh()
+
+    with ui.element("q-card").classes(
+        "q-pa-xl shadow-3 rounded-borders bg-white w-full flex flex-col items-center"
+    ):
         ui.label("Cadastrar Cliente e Certificado").classes("q-pa-lg text-h4 q-mb-md")
-        # TODO: COLOR THEMING https://nicegui.io/documentation/section_styling_appearance
-        ui.add_css("""
-        .q-field--filled q-field__control::after {
-            color: #CEB690 !important;          /* gold text */
-            border-bottom: 2px solid #CEB690 !important;  /* gold underline */
-            font-size: 60px !important;
-        }
-        .q-field__control {
-            color: #091E2F !important;  /* gold text for filled fields */
-        }
-        .q-uploader__header {
-            background-color: #CEB690 !important;  /* dark blue header */
-        }
-        .q-field {
-            font-size: 20px !important;
-        }
-        """, shared=True)
-        legal_name = ui.input("Razão Social *") \
-            .props("filled flat") \
-            .classes(
-                "m-4 w-[80%] text-gray-100 placeholder-gray-300 bg-white hover:bg-[#0B2A43] focus:bg-[#0B2A43] focus:text-white focus:placeholder-gray-400 transition-all rounded"
-            )
-        tax_id = ui.input("CNPJ/CPF *").props("filled").classes("m-4 w-[80%] rounded")
-        cert_name = ui.input("Nome do certificado *").props("filled").classes("m-4 w-[80%] rounded")
-        cert_password = (
-            ui.input("Senha do certificado *", password_toggle_button=True)
-            .props("type=password filled")
-            .classes("m-4 w-[80%] rounded")
-        )
-        cert_file = ui.upload(
+
+        legal_name = ui.input(
+            "Razão Social *",
+            validation={"Obrigatório": lambda v: bool(v and v.strip())},
+        ).props("filled required lazy-rules").classes("w-full mb-3")
+
+        tax_id = ui.input(
+            "CNPJ/CPF *",
+            validation={
+                "Obrigatório": lambda v: bool(v and v.strip()),
+                "CNPJ/CPF inválido — deve conter 11 ou 14 dígitos": lambda v: validate_tax_id(v or ""),
+            },
+        ).props("filled required lazy-rules").classes("w-full mb-3")
+
+        cert_name = ui.input(
+            "Nome do certificado *",
+            validation={"Obrigatório": lambda v: bool(v and v.strip())},
+        ).props("filled required lazy-rules").classes("w-full mb-3")
+
+        cert_password = ui.input(
+            "Senha do certificado *",
+            password_toggle_button=True,
+            validation={"Obrigatório": lambda v: bool(v and v.strip())},
+        ).props("type=password filled required lazy-rules").classes("w-full mb-3")
+
+        ui.upload(
             label="Arquivo do certificado .pfx",
             on_upload=handle_upload,
-            multiple=False
-        ).props('accept=".pfx" auto-upload').classes("m-4 text-center text-h6")
+            multiple=False,
+        ).props('accept=".pfx" auto-upload').classes("w-full")
 
-        with cert_file.add_slot('list'):
-            ui.icon('cloud_upload').classes("text-6xl text-[#CEB690]")
-        
+        @ui.refreshable
+        def file_chip():
+            if not state["file"]:
+                return
+            with ui.row().classes("items-center gap-2 p-2 rounded"):
+                ui.icon("description")
+                ui.label(state["file"].name).classes("font-mono text-sm")
+                ui.button(icon="close", on_click=remove_file).props("flat round dense")
+
+        file_chip()
+
         ui.button(
             "Enviar",
-            on_click=lambda: submit_form(legal_name, tax_id, cert_name, cert_password, cert_file)
-        ).props("flat").classes("bg-[#091E2F] text-white hover:bg-[#93713C] transition-all float-right q-pa-md rounded text-subtitle-1")
+            on_click=lambda: submit_form(state, legal_name, tax_id, cert_name, cert_password),
+        ).props("flat").classes(
+            "bg-[#091E2F] text-white hover:bg-[#93713C] transition-all float-right q-pa-md rounded"
+        )

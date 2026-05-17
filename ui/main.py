@@ -1,14 +1,16 @@
+from pathlib import Path
 from nicegui import ui
 import pages.login
 import pages.dashboard
 import pages.add_cert
 import pages.clients
 import pages.ecac
-import pages.login
 import pages.signup
 import pages.forgot_password
 import pages.reset_password
-from helpers.secret import Secrets    
+from helpers.secret import Secrets
+
+ui.add_css(Path(__file__).parent.joinpath("assets/theme.css").read_text(), shared=True)
 
 ui.run(
     host="0.0.0.0",

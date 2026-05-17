@@ -56,15 +56,10 @@ async def handle_login(email, password):
     async with httpx.AsyncClient() as client:
         response = await client.post(LOGIN_URL, data=payload)
 
-        print("RESP ==> ", response, response.status_code)
-
     if response.status_code == 200:
         data = response.json()
-
-        print("DATA ==> ", data)
-        Auth.login(data["access_token"])
-        print(f"Auth.is_logged_in(): {Auth.is_logged_in()}")
-        ui.notify("Logged in successfully!", color="green")
+        await Auth.login(data["access_token"])
+        ui.notify("Sessão iniciada", color="green")
 
         # Trigger redirect AFTER the notify
         ui.timer(0.5, lambda: ui.navigate.to("/cadastrar-certificado"))
