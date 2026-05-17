@@ -139,6 +139,7 @@ SECRETS_DIR=/tmp/test-secrets pytest && open htmlcov/index.html
 
 - [ ] Enable HTTPS — see [NiceGUI deployment docs](https://nicegui.io/documentation/section_configuration_deployment#server_hosting)
 - [ ] Harden Dockerfiles with a non-root user
+- [ ] Remove docker volumes
 - [ ] Rotate Fernet and auth keys and store them in a KMS (AWS KMS, HashiCorp Vault, or Azure Key Vault) instead of a secrets volume
 - [ ] Review input sanitisation (Pydantic handles API schemas; UI forms have client-side validation)
 
