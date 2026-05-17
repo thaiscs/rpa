@@ -117,7 +117,7 @@ async def fetch_client_cert(db: AsyncSession, client_id: str):
     if not cert:
         raise RuntimeError(f"Client {client_id} does not have stored certificates.")
 
-    cert_bytes = decrypt(cert.encrypted_cert["nonce"], cert.encrypted_cert["ciphertext"])
-    key_bytes = decrypt(cert.encrypted_key["nonce"], cert.encrypted_key["ciphertext"])
+    cert_bytes = decrypt(cert.encrypted_cert["ciphertext"])
+    key_bytes = decrypt(cert.encrypted_key["ciphertext"])
 
     return cert_bytes, key_bytes

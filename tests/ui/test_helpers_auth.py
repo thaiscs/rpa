@@ -229,3 +229,138 @@ class TestProtectedDecorator:
         """Test that protected with superuser flag."""
         decorator = protected("/test", superuser=True)
         assert callable(decorator)
+
+
+class TestProtectedDecoratorBehavior:
+    """Tests verifying the wrapper logic inside the protected decorator."""
+
+    def _make_mock_ui(self):
+        """Return a mock ui where ui.page(route) is a pass-through decorator."""
+        mock_ui = MagicMock()
+        mock_ui.page.return_value = lambda func: func
+        return mock_ui
+
+    async def test_redirects_to_login_when_no_token(self, mock_app_storage):
+        mock_ui = self._make_mock_ui()
+        mock_app_storage.user = {}
+
+        with patch("ui.helpers.auth.app", MagicMock(storage=mock_app_storage)), \
+             patch("ui.helpers.auth.ui", mock_ui):
+
+            @protected("/guarded")
+            async def guarded_page():
+                pass  # pragma: no cover
+
+            await guarded_page()
+
+        mock_ui.navigate.to.assert_called_once_with("/login")
+        notify_msg = mock_ui.notify.call_args[0][0]
+        assert "Login required" in notify_msg
+
+    async def test_shows_session_expired_message_for_expired_token(self, mock_app_storage):
+        import time
+        mock_ui = self._make_mock_ui()
+        mock_app_storage.user = {
+            "token": "old_token",
+            "expires_at": time.time() - 3600,
+        }
+
+        with patch("ui.helpers.auth.app", MagicMock(storage=mock_app_storage)), \
+             patch("ui.helpers.auth.ui", mock_ui):
+
+            @protected("/guarded")
+            async def guarded_page():
+                pass  # pragma: no cover
+
+            await guarded_page()
+
+        mock_ui.navigate.to.assert_called_once_with("/login")
+        notify_msg = mock_ui.notify.call_args[0][0]
+        assert "expired" in notify_msg.lower()
+
+    async def test_calls_page_function_when_logged_in(self, mock_app_storage):
+        import time
+        mock_ui = self._make_mock_ui()
+        mock_app_storage.user = {
+            "token": "valid_token",
+            "expires_at": time.time() + 3600,
+            "user": {"email": "u@test.com", "is_superuser": False},
+        }
+        called = {"n": 0}
+
+        with patch("ui.helpers.auth.app", MagicMock(storage=mock_app_storage)), \
+             patch("ui.helpers.auth.ui", mock_ui):
+
+            @protected("/guarded")
+            def guarded_page():
+                called["n"] += 1
+
+            await guarded_page()
+
+        assert called["n"] == 1
+        mock_ui.navigate.to.assert_not_called()
+
+    async def test_blocks_non_superuser_from_superuser_page(self, mock_app_storage):
+        import time
+        mock_ui = self._make_mock_ui()
+        mock_app_storage.user = {
+            "token": "valid_token",
+            "expires_at": time.time() + 3600,
+            "user": {"email": "u@test.com", "is_superuser": False},
+        }
+        called = {"n": 0}
+
+        with patch("ui.helpers.auth.app", MagicMock(storage=mock_app_storage)), \
+             patch("ui.helpers.auth.ui", mock_ui):
+
+            @protected("/admin-only", superuser=True)
+            def admin_page():
+                called["n"] += 1  # pragma: no cover
+
+            await admin_page()
+
+        assert called["n"] == 0
+        notify_msg = mock_ui.notify.call_args[0][0]
+        assert "Admin" in notify_msg
+
+    async def test_allows_superuser_to_access_superuser_page(self, mock_app_storage):
+        import time
+        mock_ui = self._make_mock_ui()
+        mock_app_storage.user = {
+            "token": "valid_token",
+            "expires_at": time.time() + 3600,
+            "user": {"email": "admin@test.com", "is_superuser": True},
+        }
+        called = {"n": 0}
+
+        with patch("ui.helpers.auth.app", MagicMock(storage=mock_app_storage)), \
+             patch("ui.helpers.auth.ui", mock_ui):
+
+            @protected("/admin-only", superuser=True)
+            def admin_page():
+                called["n"] += 1
+
+            await admin_page()
+
+        assert called["n"] == 1
+
+    async def test_awaits_async_page_function(self, mock_app_storage):
+        import time
+        mock_ui = self._make_mock_ui()
+        mock_app_storage.user = {
+            "token": "valid_token",
+            "expires_at": time.time() + 3600,
+            "user": {"email": "u@test.com", "is_superuser": False},
+        }
+        called = {"n": 0}
+
+        with patch("ui.helpers.auth.app", MagicMock(storage=mock_app_storage)), \
+             patch("ui.helpers.auth.ui", mock_ui):
+
+            @protected("/guarded")
+            async def guarded_page():
+                called["n"] += 1
+
+            await guarded_page()
+
+        assert called["n"] == 1
