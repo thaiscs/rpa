@@ -3,7 +3,11 @@ from unittest.mock import MagicMock, AsyncMock, patch
 import pytest
 
 # Install stub modules for UI-service internal imports before cert_form is imported.
-for _mod in ["helpers", "helpers.validation", "components", "components.err_toast", "components.err_dialog"]:
+for _mod in [
+    "helpers", "helpers.validation",
+    "components", "components.err_toast", "components.err_dialog",
+    "theme",
+]:
     sys.modules.setdefault(_mod, MagicMock())
 
 from ui.components.cert_form import submit_form
@@ -161,7 +165,10 @@ class TestSubmitFormApiCall:
                 state, _field("E"), _field("12345678000190"), _field("c"), _field("p")
             )
 
-        mock_dialog.assert_called_once_with("Erro interno do servidor")
+        mock_dialog.assert_called_once_with(
+            "Erro interno do servidor",
+            title="Não foi possível enviar o certificado",
+        )
 
     async def test_non_500_error_calls_show_error_dialog(self):
         state = {"file": self._make_uploaded_file()}
@@ -175,4 +182,7 @@ class TestSubmitFormApiCall:
                 state, _field("E"), _field("12345678000190"), _field("c"), _field("p")
             )
 
-        mock_dialog.assert_called_once_with("Bad cert password")
+        mock_dialog.assert_called_once_with(
+            "Bad cert password",
+            title="Não foi possível enviar o certificado",
+        )

@@ -1,22 +1,18 @@
-from nicegui import ui, app
+from nicegui import ui
 import httpx
 from helpers.parsing import parse_err
 from components.err_toast import toast_err
 from components.err_dialog import show_error_dialog
 from helpers.auth import Auth
+from theme import Color, primary_button, auth_card_wrapper, auth_card
 
 LOGIN_URL = "http://api:8080/auth/jwt/login"
 
 
 @ui.page("/login")
 def login_page():
-    with ui.element("div").classes(
-        "flex justify-center items-center min-h-screen w-full bg-[#091E2F]"
-    ):
-        with ui.element("q-card").classes(
-            "q-pa-md sm:q-pa-xl shadow-3 rounded-borders bg-white flex flex-col "
-            "items-center w-full max-w-md mx-4"
-        ):
+    with auth_card_wrapper():
+        with auth_card():
             ui.label("Entrar").classes("text-h4 q-mb-md text-center")
 
             email = (
@@ -31,10 +27,7 @@ def login_page():
                 .classes("w-full q-mb-md")
             )
 
-            login_btn = ui.button("Entrar").props("flat").classes(
-                "bg-[#CEB690] text-white hover:bg-[#93713C] "
-                "transition-all q-pa-md rounded w-full"
-            )
+            login_btn = primary_button("Entrar", full_width=True)
             login_btn.on("click", lambda: handle_login(login_btn, email, password))
             password.on("keydown.enter", lambda: handle_login(login_btn, email, password))
 

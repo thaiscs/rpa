@@ -3,6 +3,7 @@ import httpx
 from helpers.validation import validate_tax_id
 from components.err_toast import toast_err
 from components.err_dialog import show_error_dialog
+from theme import Color
 
 API_URL = "http://api:8080/upload-cert"
 
@@ -122,7 +123,8 @@ def cert_form():
         file_chip()
 
         send_btn = ui.button("Enviar").props("flat").classes(
-            "bg-[#091E2F] text-white hover:bg-[#93713C] transition-all float-right q-pa-md rounded"
+            f"bg-[{Color.NAVY}] text-white hover:bg-[{Color.GOLD_DEEP}] "
+            "transition-all float-right q-pa-md rounded"
         )
         send_btn.on(
             "click",

@@ -1,6 +1,7 @@
 from nicegui import ui
 from components.shell import page_shell
 from helpers.auth import protected
+from theme import Color
 
 
 @protected("/dashboard")
@@ -18,5 +19,5 @@ def dashboard():
             ]:
                 with ui.card().classes("p-6 min-w-[14rem] flex-grow"):
                     ui.label(title).classes("text-sm text-gray-500")
-                    ui.label(value).classes("text-4xl font-bold text-[#091E2F]")
+                    ui.label(value).classes(f"text-4xl font-bold text-[{Color.NAVY}]")
                     ui.label(hint).classes("text-xs text-gray-400 mt-1")

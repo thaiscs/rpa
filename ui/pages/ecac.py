@@ -2,6 +2,7 @@ from nicegui import ui
 from components.shell import page_shell
 from helpers.auth import protected
 from components.err_toast import toast_err
+from theme import primary_button
 
 
 @protected("/ecac")
@@ -13,10 +14,7 @@ def ecac():
                 ui.label("Acompanhe as notificações fiscais dos seus clientes").classes(
                     "text-gray-600"
                 )
-            ui.button("Conectar conta e-CAC", on_click=lambda: toast_err("Em breve")) \
-                .props("flat").classes(
-                    "bg-[#CEB690] text-white hover:bg-[#93713C] q-pa-md rounded"
-                )
+            primary_button("Conectar conta e-CAC").on("click", lambda: toast_err("Em breve"))
 
         with ui.card().classes("w-full p-8 items-center"):
             ui.html('<i class="bi bi-shield-lock text-6xl text-gray-300" aria-hidden="true"></i>')

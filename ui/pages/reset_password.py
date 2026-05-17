@@ -3,19 +3,15 @@ import httpx
 from helpers.parsing import parse_err
 from components.err_toast import toast_err
 from components.err_dialog import show_error_dialog
+from theme import Color, primary_button, auth_card_wrapper, auth_card
 
 API_URL = "http://api:8080/auth/reset-password"
 
 
 @ui.page("/reset-password")
 def reset_password(token: str):
-    with ui.element("div").classes(
-        "flex justify-center items-center min-h-screen w-full bg-[#091E2F]"
-    ):
-        with ui.element("q-card").classes(
-            "q-pa-md sm:q-pa-xl shadow-3 rounded-borders bg-white flex flex-col "
-            "items-center w-full max-w-md mx-4"
-        ):
+    with auth_card_wrapper():
+        with auth_card():
             ui.label("Alterar senha").classes("text-h4 q-mb-md text-center")
 
             new_password = ui.input("Nova senha", password_toggle_button=True) \
@@ -26,9 +22,7 @@ def reset_password(token: str):
                 .props("type=password filled autocomplete=new-password") \
                 .classes("w-full q-mb-md")
 
-            submit_btn = ui.button("Alterar").props("flat").classes(
-                "bg-[#CEB690] text-white hover:bg-[#93713C] q-pa-md rounded w-full"
-            )
+            submit_btn = primary_button("Alterar", full_width=True)
             submit_btn.on("click", lambda: submit_reset(submit_btn, new_password, confirm, token))
             confirm.on("keydown.enter", lambda: submit_reset(submit_btn, new_password, confirm, token))
 
