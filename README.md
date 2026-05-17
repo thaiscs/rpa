@@ -1,115 +1,124 @@
-## Deployment - checklist:
+# RPA — Certificate Management System
 
-- Https encryption/certificate: https://nicegui.io/documentation/section_configuration_deployment#server_hosting
-- Sanitize user inputs: pydantics doing it?
-- refactor compose, remove volumes
-- refactor dockerfiles with non-root user for security
+Robotic Process Automation platform for managing digital certificates (PFX/A1) used for Brazilian tax authority (e-CAC) integrations.
 
-## Escalar
+## Architecture
 
-- Change certificate column from JSON to BYTEA for better security
-- Role-based navigation client tenancy
-- Implementar certificate_health_check expired (Certificados para RPA e-CAC in chatgpt)
-- Armazenar a chave de criptografia em um KMS (AWS KMS, HashiCorp Vault, Azure Key Vault).
-## Overview
+```
+rpa/
+├── api/        FastAPI backend — JWT auth, certificate upload, job dispatch
+├── ui/         NiceGUI admin panel — client and certificate management
+├── worker/     Async RPA job processor — decrypts certs, runs automation bots
+├── shared/     Shared library — DB models, Fernet encryption, CRUD operations
+└── alembic/    Database migrations
+```
 
-This repository contains a small RPA (Robotic Process Automation) project with:
+**Services at a glance**
 
-- `api/`: Flask API service
-- `worker/`: Background worker service
-- `shared/`: Shared utilities (database, crypto, etc.)
-- `docker-compose.yml`: Orchestrates the services
+| Service | Stack | Port |
+|---------|-------|------|
+| `api` | FastAPI + fastapi-users + SQLAlchemy | 8080 |
+| `ui` | NiceGUI | 8081 |
+| `postgres` | PostgreSQL 16 | 5432 |
+| `rabbitmq` | RabbitMQ | 5672 |
 
-## Quick Start
+Certificate data (PFX, password, key, cert) is encrypted at rest using Fernet symmetric encryption before being stored in PostgreSQL.
 
-### Run with Docker Compose
+## Quick start
 
 ```bash
 docker compose up --build
 ```
 
-### Other useful commands
+The API will be at `http://localhost:8080` and the admin panel at `http://localhost:8081`.
+
+### Stop and clean up
+
 ```bash
-docker compose down --remove-orphans
-docker compose down -v (delete volumes)
-docker volume rm rpa_secrets-store
-docker compose stop postgres
-docker compose rm -f postgres
-docker system prune -f
-docker compose build --no-cache web
-docker compose up --build --force-recreate
-docker compose up --force-recreate
-docker compose ps -a
-docker compose images
+docker compose down --remove-orphans   # stop, keep volumes
+docker compose down -v                 # stop and delete volumes
+```
+
+## Development
+
+### Run services individually
+
+```bash
+# API
+cd api && python main.py
+
+# UI
+cd ui && python main.py
+```
+
+### Useful Docker commands
+
+```bash
 docker compose logs -f api
-docker compose run migrations sh
+docker compose logs -f ui
+docker compose ps -a
+docker compose build --no-cache api
+docker compose up --force-recreate
+```
 
-alembic revision --autogenerate -m "create users auth table"
-alembic downgrade -1
-alembic history --verbose
+### Database access
 
-sudo lsof -i :5432
-sudo systemctl stop postgresql
-
-docker exec -i rpa-postgres-1 psql -U postgres -d certsdb -c "SELECT * FROM clients;"
-docker exec -i rpa-postgres-1 psql -U postgres -d certsdb -c "\x \nSELECT * FROM certificates LIMIT 1;"
+```bash
 docker exec -it rpa-postgres-1 psql -U postgres -d certsdb
-\dt
-\d+ clients
-docker exec -i rpa-postgres-1 psql -U postgres -d certsdb -c "SELECT tablename FROM pg_tables WHERE schemaname = 'public';"
 ```
 
-The above command builds and starts the `api` and `worker` services.
-
-### Accessing the API
-
-By default, the API will be available at:
-
-```text
-http://localhost:5000
+```sql
+SELECT * FROM clients;
+SELECT * FROM certificates LIMIT 1;
+\dt          -- list tables
+\d+ clients  -- describe table
 ```
 
-## Development Notes
-
-### API
-
-The API service is defined in `api/app.py` and has its own `requirements.txt`.
-
-### Worker
-
-The worker service is defined in `worker/worker.py` and has its own `requirements.txt`.
-
-## Useful Commands
-
-### Run API locally without Docker
+### Migrations
 
 ```bash
-cd api
-python app.py
+# Generate a new migration
+alembic revision --autogenerate -m "description"
+
+# Apply via Docker
+docker compose run migrations
+
+# Rollback one step
+alembic downgrade -1
+
+# View history
+alembic history --verbose
 ```
 
-### Run Worker locally without Docker
+## Testing
 
 ```bash
-cd worker
-python worker.py
+pip install -r requirements-test.txt
+
+# Generate test secrets once
+mkdir -p /tmp/test-secrets
+python -c "from cryptography.fernet import Fernet; open('/tmp/test-secrets/fernet.key','w').write(Fernet.generate_key().decode())"
+echo "any-string-at-least-32-chars-long" > /tmp/test-secrets/auth.key
+
+# Run all tests
+SECRETS_DIR=/tmp/test-secrets pytest
+
+# With HTML coverage report
+SECRETS_DIR=/tmp/test-secrets pytest && open htmlcov/index.html
 ```
 
-## Helpful Markup Blocks
+167 tests across api, shared, ui, worker, and scripts. See [`tests/README.md`](tests/README.md) for full documentation.
 
-### Code Block Example
+## Deployment checklist
 
-```python
-def hello():
-		print("Hello from the RPA project!")
-```
+- [ ] Enable HTTPS — see [NiceGUI deployment docs](https://nicegui.io/documentation/section_configuration_deployment#server_hosting)
+- [ ] Harden Dockerfiles with a non-root user
+- [ ] Rotate Fernet and auth keys and store them in a KMS (AWS KMS, HashiCorp Vault, or Azure Key Vault) instead of a secrets volume
+- [ ] Review input sanitisation (Pydantic handles API schemas; UI forms have client-side validation)
 
-### JSON Example
+## Backlog
 
-```json
-{
-	"status": "ok",
-	"message": "This is a sample markup block."
-}
-```
-
+- Change `encrypted_*` certificate columns from JSONB to BYTEA for better storage efficiency
+- Role-based access and client tenancy in the UI
+- Certificate expiry health check job
+- RabbitMQ worker re-enable and end-to-end RPA flow testing
