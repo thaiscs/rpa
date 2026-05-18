@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
+
 from cryptography.fernet import Fernet
+
 
 def ensure(path: Path):
     if path.exists() and path.stat().st_size > 0:

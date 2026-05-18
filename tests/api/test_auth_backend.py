@@ -1,12 +1,12 @@
-import pytest
-from unittest.mock import patch, MagicMock
-from fastapi_users.authentication import JWTStrategy, BearerTransport
+from unittest.mock import patch
+
+from fastapi_users.authentication import BearerTransport, JWTStrategy
 
 from api.auth.backend import (
-    get_jwt_strategy,
+    SESSION_LIFETIME_SECONDS,
     auth_backend,
     bearer_transport,
-    SESSION_LIFETIME_SECONDS
+    get_jwt_strategy,
 )
 
 

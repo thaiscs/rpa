@@ -1,4 +1,3 @@
-import pytest
 
 from ui.helpers.validation import validate_tax_id
 

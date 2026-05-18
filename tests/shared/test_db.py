@@ -1,8 +1,8 @@
-import pytest
-from unittest.mock import patch, MagicMock
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
-from shared.db import get_db, DATABASE_URL, engine, AsyncSessionLocal, Base
+import pytest
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from shared.db import DATABASE_URL, AsyncSessionLocal, Base, engine, get_db
 
 
 class TestDatabaseConnection:
@@ -21,7 +21,7 @@ class TestDatabaseConnection:
     def test_sessionmaker_is_created(self):
         """Test that AsyncSessionLocal is created."""
         assert AsyncSessionLocal is not None
-        assert hasattr(AsyncSessionLocal, '__call__')
+        assert callable(AsyncSessionLocal)
 
     @pytest.mark.asyncio
     async def test_get_db_yields_session(self):

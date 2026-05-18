@@ -1,6 +1,7 @@
-import pytest
 import uuid
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 from cryptography.fernet import Fernet
 
 

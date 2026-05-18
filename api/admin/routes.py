@@ -1,20 +1,21 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.auth.deps import current_admin
-from api.auth.deps import current_superuser # for internal routes, we use superuser guard
+from api.auth.deps import (
+    current_admin,
+    current_superuser,  # for internal routes, we use superuser guard
+)
 from api.auth.schemas import UserRead as User
-from api.services.queue_service import publish_job
-
-from shared.db import get_db
 from shared.crud import save_client_cert
+from shared.db import get_db
 from shared.utils import get_person_type
 
 router = APIRouter(
     prefix="/admin",
-    dependencies=[Depends(current_admin)]
+    dependencies=[Depends(current_admin)]  # noqa: B008
 )
 
 # -----------------------------
@@ -33,12 +34,12 @@ log = logging.getLogger(__name__)
 
 @router.post("admin/upload-cert")
 async def upload_cert(
-    legal_name: str = Form(..., alias="razao_social"),
-    tax_id: str = Form(..., alias="CNPJ_CPF"),
-    cert_name: str = Form(...),
-    cert_password: str = Form(...),
-    cert_file: UploadFile = File(...),
-    db: AsyncSession = Depends(get_db)
+    legal_name: str = Form(..., alias="razao_social"),  # noqa: B008
+    tax_id: str = Form(..., alias="CNPJ_CPF"),  # noqa: B008
+    cert_name: str = Form(...),  # noqa: B008
+    cert_password: str = Form(...),  # noqa: B008
+    cert_file: UploadFile = File(...),  # noqa: B008
+    db: AsyncSession = Depends(get_db)  # noqa: B008
 ):
     log.info("==== /upload-cert called ====")
 
@@ -68,13 +69,12 @@ async def upload_cert(
 
     except Exception as e:
         log.exception("Error in /upload-cert")
-        raise HTTPException(status_code=500, detail=str(e))
-    
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
 
 # -----------------------------
 # MODELS
 # -----------------------------
-from pydantic import BaseModel
 
 class JobPayload(BaseModel):
     job_type: str
@@ -88,7 +88,7 @@ class JobPayload(BaseModel):
 @router.post("/admin/send-job")
 async def send_job(
         payload: JobPayload,
-        user: User = Depends(current_superuser)
+        user: User = Depends(current_superuser)  # noqa: B008
     ):
     # publish_job(payload.dict())
     return {"status": "queued", "job": payload}

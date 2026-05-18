@@ -1,12 +1,14 @@
 import io
 import uuid
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
+from pydantic import ValidationError
 
-from api.main import app
 from api.auth.deps import current_admin, current_superuser
+from api.main import app
 from shared.db import get_db
 
 
@@ -99,7 +101,7 @@ class TestAdminRouterConfig:
 
     def test_job_payload_missing_data_raises(self):
         from api.admin.routes import JobPayload
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             JobPayload(job_type="ecac")
 
 

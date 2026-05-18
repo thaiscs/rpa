@@ -1,11 +1,12 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Boolean, String, TIMESTAMP, ForeignKey, JSON, func
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.dialects.postgresql import ENUM as PG_ENUM
-from sqlalchemy.orm import Mapped, Mapped, mapped_column, mapped_column, relationship
+
 from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTableUUID
+from sqlalchemy import TIMESTAMP, ForeignKey, String, func
+from sqlalchemy.orm import Mapped, mapped_column
+
 from shared.db import Base
+
 
 class User(SQLAlchemyBaseUserTableUUID, Base):
     __tablename__ = "users"

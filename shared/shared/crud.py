@@ -1,10 +1,12 @@
-from sqlalchemy import select, insert
+import logging
+
+from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
-from shared.models.client import Client
+
+from shared.crypto import decrypt, encrypt, extract_cert_metadata, extract_pfx_components
 from shared.models.certificate import Certificate
-from shared.crypto import encrypt, decrypt, extract_pfx_components, extract_cert_metadata
-import logging
+from shared.models.client import Client
 
 log = logging.getLogger(__name__)
 

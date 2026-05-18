@@ -1,11 +1,11 @@
-import pytest
 import uuid
 from unittest.mock import MagicMock
+
+import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 from api.auth.deps import current_admin, current_superuser
-from api.auth.users import fastapi_users
 
 
 class TestCurrentAdmin:

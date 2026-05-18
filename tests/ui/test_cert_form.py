@@ -1,6 +1,5 @@
 import sys
-from unittest.mock import MagicMock, AsyncMock, patch
-import pytest
+from unittest.mock import AsyncMock, MagicMock, patch
 
 # Install stub modules for UI-service internal imports before cert_form is imported.
 for _mod in [
@@ -10,7 +9,7 @@ for _mod in [
 ]:
     sys.modules.setdefault(_mod, MagicMock())
 
-from ui.components.cert_form import submit_form
+from ui.components.cert_form import submit_form  # noqa: E402
 
 
 def _field(value):

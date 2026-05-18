@@ -1,5 +1,6 @@
 import re
 
+
 def get_person_type(tax_id: str) -> str:
     """
     Define person_type based on tax_id length

@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 
+
 def load_secret() -> str:
     secrets_dir = Path(os.getenv("SECRETS_DIR", "/secrets"))
     key_file = secrets_dir / "auth.key"

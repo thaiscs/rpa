@@ -1,6 +1,7 @@
-import pytest
 import time
-from unittest.mock import patch, MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from ui.helpers.auth import Auth, protected
 
