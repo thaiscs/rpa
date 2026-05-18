@@ -1,11 +1,10 @@
-import pytest
 import uuid
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from shared.crud import save_client_cert, fetch_client_cert
-from shared.models.client import Client, PersonTypeEnum
-from shared.models.certificate import Certificate
+from shared.crud import fetch_client_cert, save_client_cert
 
 
 @pytest.fixture

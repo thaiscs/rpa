@@ -1,22 +1,24 @@
 """create initial tables
 
 Revision ID: 8ccc99efb03d
-Revises: 
+Revises:
 Create Date: 2026-04-13 13:16:41.563399
 
 """
-from typing import Sequence, Union
-from alembic import op
+from collections.abc import Sequence
+from typing import Union
+
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
-from shared.triggers import create_updated_at_trigger
 
+from alembic import op
+from shared.triggers import create_updated_at_trigger
 
 # revision identifiers, used by Alembic.
 revision: str = '8ccc99efb03d'
-down_revision: Union[str, Sequence[str], None] = None
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | Sequence[str] | None = None
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 # --- ENUM -------------------------------------------------------------
@@ -32,7 +34,7 @@ person_type_enum = postgresql.ENUM(
 
 def upgrade():
     """Upgrade schema."""
-    
+
     # ---- ENUM type ------------------------------------------------
     person_type_enum.create(op.get_bind(), checkfirst=True)
 
@@ -120,7 +122,7 @@ def downgrade():
     # Drop triggers
     conn = op.get_bind()
     conn.execute(sa.text("DROP FUNCTION IF EXISTS update_updated_at_column CASCADE;"))
-    
+
     # Drop tables
     op.drop_table("certificates")
     op.drop_table("clients")

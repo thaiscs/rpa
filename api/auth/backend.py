@@ -1,14 +1,14 @@
 from fastapi_users.authentication import (
     AuthenticationBackend,
-    JWTStrategy,
     BearerTransport,
+    JWTStrategy,
 )
-
-bearer_transport = BearerTransport(tokenUrl="auth/jwt/login")
 
 from api.auth.config import SECRET
 
 SESSION_LIFETIME_SECONDS = 8 * 60 * 60
+
+bearer_transport = BearerTransport(tokenUrl="auth/jwt/login")
 
 
 def get_jwt_strategy() -> JWTStrategy:

@@ -1,10 +1,7 @@
-import pytest
-import uuid
-from datetime import datetime
 
-from shared.models.user import User
-from shared.models.client import Client, PersonTypeEnum
 from shared.models.certificate import Certificate
+from shared.models.client import Client, PersonTypeEnum
+from shared.models.user import User
 
 
 class TestUser:

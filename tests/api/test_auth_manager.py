@@ -1,5 +1,6 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
 
 from api.auth.manager import UserManager, get_user_manager
 from shared.models.user import User
@@ -25,8 +26,8 @@ class TestGetUserManager:
         with patch("api.auth.manager.SQLAlchemyUserDatabase") as mock_db_class:
             mock_db_class.return_value = MagicMock()
 
-            async for manager in get_user_manager(mock_db_session):
-                assert isinstance(manager, UserManager)
+            async for _manager in get_user_manager(mock_db_session):
+                assert isinstance(_manager, UserManager)
                 break
 
     @pytest.mark.asyncio
@@ -37,6 +38,6 @@ class TestGetUserManager:
             mock_db_instance = MagicMock()
             mock_db_class.return_value = mock_db_instance
 
-            async for manager in get_user_manager(mock_db_session):
+            async for _manager in get_user_manager(mock_db_session):
                 mock_db_class.assert_called_once_with(mock_db_session, User)
                 break

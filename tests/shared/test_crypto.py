@@ -1,15 +1,14 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
-import os
-from pathlib import Path
-from unittest.mock import patch, MagicMock
-from cryptography.fernet import Fernet, InvalidToken
+from cryptography.fernet import Fernet
 
 from shared.crypto import (
-    load_fernet_key,
-    encrypt,
     decrypt,
+    encrypt,
+    extract_cert_metadata,
     extract_pfx_components,
-    extract_cert_metadata
+    load_fernet_key,
 )
 
 
@@ -123,9 +122,8 @@ class TestDecrypt:
 
     def test_decrypt_invalid_token(self, test_fernet_key):
         """Test error when ciphertext is invalid."""
-        with patch("shared.crypto.fernet", Fernet(test_fernet_key)):
-            with pytest.raises(RuntimeError, match="Invalid encryption token"):
-                decrypt("invalid_ciphertext")
+        with patch("shared.crypto.fernet", Fernet(test_fernet_key)), pytest.raises(RuntimeError, match="Invalid encryption token"):
+            decrypt("invalid_ciphertext")
 
 
 class TestExtractPfxComponents:

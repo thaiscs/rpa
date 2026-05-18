@@ -1,7 +1,7 @@
-import pytest
-from pathlib import Path
 
-from api.auth.config import load_secret, SECRET
+import pytest
+
+from api.auth.config import SECRET, load_secret
 
 
 class TestLoadSecret:

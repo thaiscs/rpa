@@ -1,6 +1,7 @@
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
+
 def create_updated_at_trigger(conn: Connection):
     # 1. Trigger function
     conn.execute(text("""
@@ -27,7 +28,7 @@ def create_updated_at_trigger(conn: Connection):
                   AND table_schema = 'public'
             LOOP
                 trigger_name := 'set_updated_at_' || t.table_name;
-                
+
                 IF NOT EXISTS (
                       SELECT 1
                       FROM pg_trigger
@@ -36,7 +37,7 @@ def create_updated_at_trigger(conn: Connection):
                     EXECUTE format(
                         'CREATE TRIGGER %I
                          BEFORE UPDATE ON %I
-                         FOR EACH ROW 
+                         FOR EACH ROW
                          EXECUTE FUNCTION update_updated_at_column();',
                         trigger_name, t.table_name
                 );

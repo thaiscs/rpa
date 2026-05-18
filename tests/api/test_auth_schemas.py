@@ -1,8 +1,9 @@
-import pytest
 import uuid
+
+import pytest
 from pydantic import ValidationError
 
-from api.auth.schemas import UserRead, UserCreate, UserUpdate
+from api.auth.schemas import UserCreate, UserRead, UserUpdate
 
 
 class TestUserRead:

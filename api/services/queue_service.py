@@ -1,5 +1,7 @@
-import pika
 import json
+
+import pika
+
 
 # -----------------------------
 # RABBITMQ SERVICE

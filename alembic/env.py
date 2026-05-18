@@ -1,8 +1,7 @@
 import os
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from sqlalchemy import engine_from_config, pool
 from sqlalchemy.engine.url import make_url
 
 from alembic import context
@@ -16,7 +15,8 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-import logging
+import logging  # noqa: E402
+
 logging.getLogger("alembic").setLevel(logging.DEBUG)
 
 def make_sync_url(async_url: str):
@@ -38,10 +38,11 @@ print("DB URL:", SYNC_DATABASE_URL)
 config.set_main_option("sqlalchemy.url", "postgresql+psycopg2://postgres:postgres@postgres:5432/certsdb")
 # add your model's MetaData object here
 # for 'autogenerate' support
-import shared.models.user
-import shared.models.client
-import shared.models.certificate
-from shared.db import Base
+import shared.models.certificate  # noqa: E402, F401
+import shared.models.client  # noqa: E402, F401
+import shared.models.user  # noqa: E402, F401
+from shared.db import Base  # noqa: E402
+
 target_metadata = Base.metadata
 # target_metadata = None
 

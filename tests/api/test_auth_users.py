@@ -1,8 +1,6 @@
-import pytest
 from fastapi_users import FastAPIUsers
 
 from api.auth.users import fastapi_users
-from shared.models.user import User
 
 
 class TestFastAPIUsers:

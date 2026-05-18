@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
 from sqlalchemy.engine import Connection
 
 from shared.triggers import create_updated_at_trigger

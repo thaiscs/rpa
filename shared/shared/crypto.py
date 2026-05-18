@@ -1,14 +1,16 @@
-import os
 import logging
+import os
 from pathlib import Path
-from base64 import b64decode, urlsafe_b64encode
+
 from cryptography import x509
 from cryptography.fernet import Fernet, InvalidToken
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import (
-    pkcs12, Encoding, PrivateFormat, NoEncryption
+    Encoding,
+    NoEncryption,
+    PrivateFormat,
+    pkcs12,
 )
-from cryptography.hazmat.primitives.serialization import pkcs12, Encoding, PrivateFormat, NoEncryption
 
 # -----------------------------
 # Logging
@@ -29,14 +31,14 @@ def load_fernet_key() -> bytes:
 
     if not key_file.exists():
         raise RuntimeError("Encryption key not found in Docker secret volume")
-    
+
     # Must be 44 chars of URL-safe base64
     try:
         fernet_key = key_file.read_text().strip().encode()
         Fernet(fernet_key)
         return fernet_key
-    except Exception:
-        raise RuntimeError("Encryption key is not a valid Fernet key")
+    except Exception as e:
+        raise RuntimeError("Encryption key is not a valid Fernet key") from e
 
 FERNET_KEY = load_fernet_key()
 fernet = Fernet(FERNET_KEY)
@@ -66,8 +68,8 @@ def decrypt(ciphertext: str) -> bytes:
         decrypted = fernet.decrypt(ciphertext.encode("utf-8"))
         log.info("Decryption complete")
         return decrypted
-    except InvalidToken:
-        raise RuntimeError("Invalid encryption token or wrong key.")
+    except InvalidToken as e:
+        raise RuntimeError("Invalid encryption token or wrong key.") from e
 
 # -----------------------------
 # Extract cert/key from files
@@ -92,7 +94,7 @@ def extract_pfx_components(pfx_bytes: bytes, pfx_password: str):
     # Double-check the extracted components
     if private_key is None or certificate is None:
         raise ValueError("Não foi possível extrair a chave ou certificado do arquivo PFX.")
-    
+
     # Convert to PEM format
     private_key_pem = private_key.private_bytes(
         Encoding.PEM,

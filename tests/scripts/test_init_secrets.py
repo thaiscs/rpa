@@ -1,7 +1,4 @@
-import pytest
-from pathlib import Path
-from unittest.mock import patch, MagicMock
-from cryptography.fernet import Fernet
+from unittest.mock import patch
 
 from scripts.init_secrets import ensure
 

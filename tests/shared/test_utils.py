@@ -1,4 +1,3 @@
-import pytest
 
 from shared.utils import get_person_type
 

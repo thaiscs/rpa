@@ -1,4 +1,3 @@
-import pytest
 
 from ui.helpers.parsing import parse_err
 

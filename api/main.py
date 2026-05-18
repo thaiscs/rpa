@@ -1,12 +1,11 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
-from api.routes import router as public_router
 from api.admin.routes import router as admin_router
-
-from api.auth.users import fastapi_users
 from api.auth.backend import auth_backend
-from api.auth.schemas import UserRead, UserCreate, UserUpdate
+from api.auth.schemas import UserCreate, UserRead, UserUpdate
+from api.auth.users import fastapi_users
+from api.routes import router as public_router
 
 app = FastAPI(title="RPA Backend", version="1.0.0")
 

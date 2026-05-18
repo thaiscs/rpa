@@ -1,8 +1,9 @@
 import subprocess
-import pytest
-from unittest.mock import patch, MagicMock, AsyncMock, call
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from worker import run_rpa, process_job
+import pytest
+
+from worker import process_job, run_rpa
 
 
 class TestRunRpa:
@@ -115,9 +116,9 @@ class TestProcessJob:
         mock_session_local, _ = self._make_db_session_ctx()
 
         with patch("worker.AsyncSessionLocal", mock_session_local), \
-             patch("worker.fetch_client_cert", new_callable=AsyncMock, side_effect=RuntimeError("No cert")):
-            with pytest.raises(RuntimeError, match="No cert"):
-                await process_job({"client_id": "abc123"})
+             patch("worker.fetch_client_cert", new_callable=AsyncMock, side_effect=RuntimeError("No cert")), \
+             pytest.raises(RuntimeError, match="No cert"):
+            await process_job({"client_id": "abc123"})
 
     async def test_run_rpa_error_propagates(self):
         mock_session_local, _ = self._make_db_session_ctx()
