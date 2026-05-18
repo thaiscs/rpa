@@ -102,6 +102,27 @@ alembic downgrade -1
 alembic history --verbose
 ```
 
+## Linting & pre-commit
+
+`ruff` is configured in `ruff.toml` and runs on every PR via CI. To catch
+issues locally before pushing, install the pre-commit hook:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+The hook runs `ruff check --fix` on every `git commit`. If ruff modifies a
+file it exits non-zero so you re-stage and commit again.
+
+Run on demand:
+
+```bash
+pre-commit run --all-files
+# or just the linter
+ruff check ui/ --fix
+```
+
 ## Testing
 
 ### With Docker (recommended)
