@@ -82,29 +82,30 @@ def cert_form():
     ):
         ui.label("Cadastrar Cliente e Certificado").classes("q-pa-lg text-h4 q-mb-md")
 
-        legal_name = ui.input(
-            "Razão Social *",
-            validation={"Obrigatório": lambda v: bool(v and v.strip())},
-        ).props("filled required lazy-rules").classes("w-full mb-3")
+        with ui.grid(columns=2).classes("w-full gap-x-4 gap-y-0"):
+            legal_name = ui.input(
+                "Razão Social *",
+                validation={"Obrigatório": lambda v: bool(v and v.strip())},
+            ).props("filled required lazy-rules").classes("w-full mb-3")
 
-        tax_id = ui.input(
-            "CNPJ/CPF *",
-            validation={
-                "Obrigatório": lambda v: bool(v and v.strip()),
-                "CNPJ/CPF inválido — deve conter 11 ou 14 dígitos": lambda v: validate_tax_id(v or ""),
-            },
-        ).props("filled required lazy-rules").classes("w-full mb-3")
+            tax_id = ui.input(
+                "CNPJ/CPF *",
+                validation={
+                    "Obrigatório": lambda v: bool(v and v.strip()),
+                    "CNPJ/CPF inválido — deve conter 11 ou 14 dígitos": lambda v: validate_tax_id(v or ""),
+                },
+            ).props("filled required lazy-rules").classes("w-full mb-3")
 
-        cert_name = ui.input(
-            "Nome do certificado *",
-            validation={"Obrigatório": lambda v: bool(v and v.strip())},
-        ).props("filled required lazy-rules").classes("w-full mb-3")
+            cert_name = ui.input(
+                "Nome do certificado *",
+                validation={"Obrigatório": lambda v: bool(v and v.strip())},
+            ).props("filled required lazy-rules").classes("w-full mb-3")
 
-        cert_password = ui.input(
-            "Senha do certificado *",
-            password_toggle_button=True,
-            validation={"Obrigatório": lambda v: bool(v and v.strip())},
-        ).props("type=password filled required lazy-rules autocomplete=off").classes("w-full mb-3")
+            cert_password = ui.input(
+                "Senha do certificado *",
+                password_toggle_button=True,
+                validation={"Obrigatório": lambda v: bool(v and v.strip())},
+            ).props("type=password filled required lazy-rules autocomplete=off").classes("w-full mb-3")
 
         ui.upload(
             label="Arquivo do certificado .pfx",
