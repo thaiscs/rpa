@@ -1,5 +1,6 @@
 from pathlib import Path
 
+
 class Secrets:
     @staticmethod
     def storage_key() -> str:

@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 
 from api.routes import router as public_router
 from api.admin.routes import router as admin_router
@@ -8,6 +9,11 @@ from api.auth.backend import auth_backend
 from api.auth.schemas import UserRead, UserCreate, UserUpdate
 
 app = FastAPI(title="RPA Backend", version="1.0.0")
+
+
+@app.get("/health", tags=["monitoring"])
+async def health():
+    return JSONResponse({"status": "ok"})
 
 # -----------------------------
 # AUTH ROUTES

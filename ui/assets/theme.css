@@ -1,0 +1,26 @@
+.q-field--filled .q-field__control::after {
+    color: #CEB690 !important;
+    border-bottom: 2px solid #CEB690 !important;
+}
+.q-field__control {
+    color: #091E2F !important;
+}
+.q-uploader__header {
+    background-color: #CEB690 !important;
+}
+.q-field {
+    font-size: 16px !important;
+}
+
+/* A11y: visible focus rings */
+.q-btn:focus-visible,
+.q-field__control:focus-within {
+    outline: 2px solid #CEB690;
+    outline-offset: 2px;
+}
+
+[data-nav-link]:focus-visible {
+    outline: 2px solid #CEB690;
+    outline-offset: 2px;
+    border-radius: 6px;
+}

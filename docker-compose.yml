@@ -99,10 +99,14 @@ services:
     # remove on Production, copy files to image instead
     volumes:
       - ./ui:/app
+      - secrets-store:/secrets
     environment:
       - PYTHONUNBUFFERED=1
     depends_on:
-      - api
+      init-secrets:
+        condition: service_completed_successfully
+      api:
+        condition: service_started
 
   # worker:
   #   build:

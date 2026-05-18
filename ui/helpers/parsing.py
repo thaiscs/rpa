@@ -11,7 +11,7 @@ def parse_err(message: str | dict | list ) -> str:
             err_msg = err.get("msg", "")
             loc = " → ".join(str(x) for x in err.get("loc", []))
             parts.append(f"[{loc}] {err_msg} ({err_type})")
-        return "; ".join(parts)    
+        return "; ".join(parts)
     else:
         message_text = message
 
@@ -24,5 +24,5 @@ def parse_err(message: str | dict | list ) -> str:
         return "Arquivo ou senha do certificado inválidos."
     elif "missing" in lower_msg:
         return "Todos os campos são obrigatórios."
-    
+
     return message_text  # fallback

@@ -1,5 +1,6 @@
 import uuid
-from sqlalchemy import Column, String, Boolean, String, TIMESTAMP, ForeignKey, JSON
+from datetime import datetime
+from sqlalchemy import Column, String, Boolean, String, TIMESTAMP, ForeignKey, JSON, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.dialects.postgresql import ENUM as PG_ENUM
 from sqlalchemy.orm import Mapped, Mapped, mapped_column, mapped_column, relationship
@@ -13,3 +14,5 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     # If you want custom fields, add them below:
     name: Mapped[str | None] = mapped_column(String, nullable=True)
     client_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("clients.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

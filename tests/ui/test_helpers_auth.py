@@ -122,10 +122,23 @@ class TestAuthFetchUser:
 class TestAuthLogin:
     """Tests for Auth.login method."""
 
-    def test_login_stores_token(self, mock_app_storage):
+    @pytest.mark.asyncio
+    async def test_login_stores_token(self, mock_app_storage):
         """Test that login stores token and expiration."""
-        with patch("ui.helpers.auth.app", MagicMock(storage=mock_app_storage)):
-            Auth.login("test_token")
+        response = MagicMock()
+        response.status_code = 200
+        response.json.return_value = {"id": "123", "email": "test@example.com"}
+
+        inner_client = AsyncMock()
+        inner_client.get.return_value = response
+
+        mock_client_cls = MagicMock()
+        mock_client_cls.return_value.__aenter__ = AsyncMock(return_value=inner_client)
+        mock_client_cls.return_value.__aexit__ = AsyncMock(return_value=False)
+
+        with patch("ui.helpers.auth.httpx.AsyncClient", mock_client_cls), \
+             patch("ui.helpers.auth.app", MagicMock(storage=mock_app_storage)):
+            await Auth.login("test_token")
 
             assert mock_app_storage.user["token"] == "test_token"
             assert "expires_at" in mock_app_storage.user
@@ -255,7 +268,7 @@ class TestProtectedDecoratorBehavior:
 
         mock_ui.navigate.to.assert_called_once_with("/login")
         notify_msg = mock_ui.notify.call_args[0][0]
-        assert "Login required" in notify_msg
+        assert "necessário" in notify_msg
 
     async def test_shows_session_expired_message_for_expired_token(self, mock_app_storage):
         import time
@@ -276,7 +289,7 @@ class TestProtectedDecoratorBehavior:
 
         mock_ui.navigate.to.assert_called_once_with("/login")
         notify_msg = mock_ui.notify.call_args[0][0]
-        assert "expired" in notify_msg.lower()
+        assert "expirada" in notify_msg.lower()
 
     async def test_calls_page_function_when_logged_in(self, mock_app_storage):
         import time
@@ -321,7 +334,7 @@ class TestProtectedDecoratorBehavior:
 
         assert called["n"] == 0
         notify_msg = mock_ui.notify.call_args[0][0]
-        assert "Admin" in notify_msg
+        assert "administradores" in notify_msg
 
     async def test_allows_superuser_to_access_superuser_page(self, mock_app_storage):
         import time

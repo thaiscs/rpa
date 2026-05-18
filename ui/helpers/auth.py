@@ -1,6 +1,10 @@
-from nicegui import app, ui
+import logging
 import time
+
 import httpx
+from nicegui import app, ui
+
+log = logging.getLogger(__name__)
 
 USER_URL = "http://api:8080/auth/users/me"
 SESSION_LIFETIME_SECONDS = 8 * 60 * 60
@@ -23,7 +27,7 @@ class Auth:
         return time.time() >= expires_at
 
     @staticmethod
-    async def fetch_user(token: str):
+    async def fetch_user(token: str) -> dict | None:
         async with httpx.AsyncClient() as client:
             try:
                 r = await client.get(
@@ -32,15 +36,16 @@ class Auth:
                 )
                 if r.status_code == 200:
                     app.storage.user["user"] = r.json()
+                    return r.json()
             except Exception as e:
-                print(f"Error fetching user: {e}")
-            return None
+                log.warning("fetch_user failed: %s", e)
+        return None
 
     @staticmethod
-    def login(token: str):
-        user = app.storage.user
-        user["token"] = token
-        user["expires_at"] = time.time() + SESSION_LIFETIME_SECONDS
+    async def login(token: str) -> dict | None:
+        app.storage.user["token"] = token
+        app.storage.user["expires_at"] = time.time() + SESSION_LIFETIME_SECONDS
+        return await Auth.fetch_user(token)
 
     @staticmethod
     def logout():
@@ -70,15 +75,18 @@ def protected(route: str, superuser: bool = False):
             expired = had_token and Auth._is_expired()
 
             if not Auth.is_logged_in():
-                msg = "Session expired, please log in again" if expired else "Login required"
+                msg = "Sessão expirada — entre novamente" if expired else "Login necessário"
                 ui.notify(msg, color="negative")
                 ui.navigate.to("/login")
                 return
 
             user = Auth.user()
+            if user is None:
+                user = await Auth.fetch_user(Auth.token())
 
             if superuser and not (user and user.get("is_superuser")):
-                ui.notify("Admins only", color="negative")
+                ui.notify("Acesso restrito a administradores", color="negative")
+                ui.navigate.to("/dashboard")
                 return
 
             result = func()

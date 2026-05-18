@@ -1,5 +1,6 @@
 import re
 
+
 def validate_tax_id(tax_id: str) -> bool:
     """
     Validate tax_id format (CPF or CNPJ)
