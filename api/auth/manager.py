@@ -1,7 +1,7 @@
 import uuid
 
 from fastapi import Depends
-from fastapi_users import BaseUserManager
+from fastapi_users import BaseUserManager, UUIDIDMixin
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,7 +10,7 @@ from shared.db import get_db
 from shared.models.user import User
 
 
-class UserManager(BaseUserManager[User, uuid.UUID]):
+class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     reset_password_token_secret = SECRET
     verification_token_secret = SECRET
 

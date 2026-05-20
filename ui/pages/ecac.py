@@ -1,37 +1,33 @@
 from nicegui import ui
 
 from components.err_toast import toast_err
-from components.shell import page_shell
-from helpers.auth import protected
 from theme import Color, primary_button
 
 
-@protected("/ecac")
-def ecac():
-    with page_shell(current="/ecac"):
-        with ui.row().classes("items-center justify-between w-full"):
-            with ui.column().classes("gap-1"):
-                ui.label("e-CAC — Notificações").classes("text-3xl font-bold")
-                ui.label("Acompanhe as notificações fiscais dos seus clientes").classes(
-                    "text-gray-600"
-                )
-            primary_button("Conectar conta e-CAC").on("click", lambda: toast_err("Em breve"))
+def render():
+    with ui.row().classes("items-center justify-between w-full"):
+        with ui.column().classes("gap-1"):
+            ui.label("e-CAC — Notificações").classes("text-3xl font-bold")
+            ui.label("Acompanhe as notificações fiscais dos seus clientes").classes(
+                "text-gray-600"
+            )
+        primary_button("Conectar conta e-CAC").on("click", lambda: toast_err("Em breve"))
 
-        notifications = []  # populated from API in future
+    notifications = []  # populated from API in future
 
-        if not notifications:
-            with ui.card().classes("w-full p-8 items-center"):
-                ui.html(
-                    '<i class="bi bi-shield-lock text-6xl text-gray-300" aria-hidden="true"></i>'
-                )
-                ui.label("Nenhuma notificação").classes("text-xl text-gray-500 mt-4")
-                ui.label("Conecte uma conta e-CAC para ver as notificações").classes(
-                    "text-gray-400"
-                )
-        else:
-            with ui.column().classes("gap-2 w-full"):
-                for notif in notifications:
-                    _notification_row(notif)
+    if not notifications:
+        with ui.card().classes("w-full p-8 items-center"):
+            ui.html(
+                '<i class="bi bi-shield-lock text-6xl text-gray-300" aria-hidden="true"></i>'
+            )
+            ui.label("Nenhuma notificação").classes("text-xl text-gray-500 mt-4")
+            ui.label("Conecte uma conta e-CAC para ver as notificações").classes(
+                "text-gray-400"
+            )
+    else:
+        with ui.column().classes("gap-2 w-full"):
+            for notif in notifications:
+                _notification_row(notif)
 
 
 def _notification_row(notif: dict):
