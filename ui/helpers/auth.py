@@ -6,7 +6,7 @@ from nicegui import app, ui
 
 log = logging.getLogger(__name__)
 
-USER_URL = "http://api:8080/auth/users/me"
+USER_URL = "http://api:8080/users/me"
 SESSION_LIFETIME_SECONDS = 8 * 60 * 60
 
 
@@ -34,6 +34,7 @@ class Auth:
                     USER_URL,
                     headers={"Authorization": f"Bearer {token}"},
                 )
+                print("fetch_user response:", r.status_code, r.text)
                 if r.status_code == 200:
                     app.storage.user["user"] = r.json()
                     return r.json()
@@ -63,6 +64,7 @@ class Auth:
 
     @staticmethod
     def user():
+        print("Auth.user() called", app.storage.user.get("user"))
         return app.storage.user.get("user")
 
 

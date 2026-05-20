@@ -4,7 +4,7 @@ from nicegui import events, ui
 from components.err_dialog import show_error_dialog
 from components.err_toast import toast_err
 from helpers.validation import validate_tax_id
-from theme import Color
+from theme import Color, field, primary_button
 
 API_URL = "http://api:8080/upload-cert"
 
@@ -52,6 +52,8 @@ async def submit_form(state, legal_name, tax_id, cert_name, cert_password, btn=N
                 ui.label(response.json().get("message", "Sucesso!")).classes("text-h6")
             dialog.open()
             state["file"] = None
+            if state.get("refresh_chip"):
+                state["refresh_chip"]()
         else:
             if response.status_code == 500:
                 message = "Erro interno do servidor"
@@ -67,66 +69,100 @@ async def submit_form(state, legal_name, tax_id, cert_name, cert_password, btn=N
 
 
 def cert_form():
-    state = {"file": None}
+    state: dict = {"file": None, "refresh_chip": None}
 
     def handle_upload(e: events.UploadEventArguments):
         state["file"] = e
+        if state.get("refresh_chip"):
+            state["refresh_chip"]()
         ui.notify(f"Arquivo '{e.name}' carregado", color="positive")
 
     def remove_file():
         state["file"] = None
-        file_chip.refresh()
+        if state.get("refresh_chip"):
+            state["refresh_chip"]()
 
-    with ui.element("q-card").classes(
-        "q-pa-xl shadow-3 rounded-borders bg-white w-full flex flex-col items-center"
-    ):
-        ui.label("Cadastrar Cliente e Certificado").classes("q-pa-lg text-h4 q-mb-md")
-
-        legal_name = ui.input(
-            "Razão Social *",
-            validation={"Obrigatório": lambda v: bool(v and v.strip())},
-        ).props("filled required lazy-rules").classes("w-full mb-3")
-
-        tax_id = ui.input(
-            "CNPJ/CPF *",
-            validation={
-                "Obrigatório": lambda v: bool(v and v.strip()),
-                "CNPJ/CPF inválido — deve conter 11 ou 14 dígitos": lambda v: validate_tax_id(v or ""),
-            },
-        ).props("filled required lazy-rules").classes("w-full mb-3")
-
-        cert_name = ui.input(
-            "Nome do certificado *",
-            validation={"Obrigatório": lambda v: bool(v and v.strip())},
-        ).props("filled required lazy-rules").classes("w-full mb-3")
-
-        cert_password = ui.input(
-            "Senha do certificado *",
-            password_toggle_button=True,
-            validation={"Obrigatório": lambda v: bool(v and v.strip())},
-        ).props("type=password filled required lazy-rules autocomplete=off").classes("w-full mb-3")
-
-        ui.upload(
-            label="Arquivo do certificado .pfx",
-            on_upload=handle_upload,
-            multiple=False,
-        ).props('accept=".pfx" auto-upload').classes("w-full")
-
-        @ui.refreshable
-        def file_chip():
-            if not state["file"]:
-                return
-            with ui.row().classes("items-center gap-2 p-2 rounded"):
-                ui.icon("description")
-                ui.label(state["file"].name).classes("font-mono text-sm")
-                ui.button(icon="close", on_click=remove_file).props("flat round dense")
-
-        file_chip()
-
-        send_btn = ui.button("Enviar").props("flat").classes(
-            f"bg-[{Color.NAVY}] text-white hover:bg-[{Color.GOLD_DEEP}] "
-            "transition-all float-right q-pa-md rounded"
+    # Page header — matches the pattern used by dashboard/clients/ecac pages
+    with ui.column().classes("gap-1"):
+        ui.label("Cadastrar Cliente e Certificado").classes(
+            f"text-3xl font-bold text-[{Color.INK}]"
         )
+        ui.label("Preencha os dados do cliente e envie o arquivo .pfx").classes(
+            f"text-sm text-[{Color.INK_SOFT}]"
+        )
+
+    # Form card — constrained max width, standard card styling (not q-pa-xl + centered)
+    with ui.card().classes("w-full max-w-3xl p-6 sm:p-8 gap-4"):
+        # Two-column on desktop, single column on mobile (responsive grid)
+        with ui.element("div").classes(
+            "grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-0 w-full"
+        ):
+            legal_name = field(
+                "Razão Social",
+                required=True,
+                **{"Obrigatório": lambda v: bool(v and v.strip())},
+            )
+
+            tax_id = field(
+                "CNPJ/CPF",
+                required=True,
+                **{
+                    "Obrigatório": lambda v: bool(v and v.strip()),
+                    "CNPJ/CPF inválido — deve conter 11 ou 14 dígitos":
+                        lambda v: validate_tax_id(v or ""),
+                },
+            )
+
+            cert_name = field(
+                "Nome do certificado",
+                required=True,
+                **{"Obrigatório": lambda v: bool(v and v.strip())},
+            )
+
+            cert_password = field(
+                "Senha do certificado",
+                password=True,
+                required=True,
+                autocomplete="off",
+                **{"Obrigatório": lambda v: bool(v and v.strip())},
+            )
+
+        # Upload section — labeled and visually distinct
+        with ui.column().classes("w-full gap-2"):
+            ui.label("Arquivo do certificado (.pfx)").classes(
+                f"text-sm font-medium text-[{Color.INK}]"
+            )
+            ui.upload(
+                on_upload=handle_upload,
+                multiple=False,
+            ).props('accept=".pfx" auto-upload flat bordered').classes("w-full")
+
+            @ui.refreshable
+            def file_chip():
+                if not state["file"]:
+                    ui.label("Nenhum arquivo selecionado").classes(
+                        f"text-xs text-[{Color.INK_MUTE}]"
+                    )
+                    return
+                with ui.row().classes(
+                    f"items-center gap-2 p-2 rounded bg-[{Color.SURFACE_ALT}] w-fit"
+                ):
+                    ui.html(
+                        f'<i class="bi bi-file-earmark-lock text-[{Color.NAVY}]" '
+                        f'aria-hidden="true"></i>'
+                    )
+                    ui.label(state["file"].name).classes("font-mono text-sm")
+                    ui.button(icon="close", on_click=remove_file) \
+                        .props("flat round dense") \
+                        .tooltip("Remover arquivo")
+
+            state["refresh_chip"] = file_chip.refresh
+            file_chip()
+
+        # Submit row — right-aligned on desktop, full-width button on mobile
+        with ui.row().classes("w-full justify-end mt-2"):
+            send_btn = primary_button("Enviar certificado")
+
         send_btn.on(
             "click",
             lambda: submit_form(state, legal_name, tax_id, cert_name, cert_password, send_btn),

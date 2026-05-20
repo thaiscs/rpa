@@ -6,7 +6,15 @@
     color: #091E2F !important;
 }
 .q-uploader__header {
-    background-color: #CEB690 !important;
+    background-color: #091E2F !important;
+    color: #FFFFFF !important;
+}
+.q-uploader__title {
+    color: #FFFFFF !important;
+}
+.q-uploader {
+    border: 1px solid #E3DDD0;
+    border-radius: 6px;
 }
 .q-field {
     font-size: 16px !important;

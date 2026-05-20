@@ -58,5 +58,5 @@ def auth_card_wrapper():
 def auth_card():
     return ui.element("q-card").classes(
         "shadow-3 rounded-borders bg-white flex flex-col items-center "
-        "w-full max-w-md mx-4 q-pa-md sm:q-pa-xl"
+        "w-full max-w-md mx-4 p-6 sm:p-10"
     )
